@@ -27,3 +27,8 @@
 *.exe
 *.out
 *.app
+
+./build
+compiler
+testrunner
+BrettAM.tar
