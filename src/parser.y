@@ -1,19 +1,22 @@
 %{
 #include <iostream>
 #include "Token.hpp"
-int vars[26];
+#include "ParseDriver.hpp"
+
+using namespace ParseDriver;
 
 extern int yylex();
 
 void yyerror(const char *msg){
+  pushError(msg);
 }
 %}
 
 %union {
-  int value;
+  Token* token;
 }
 
-%token <value> T
+%token <token> TOKEN
 
 %%
 
@@ -21,7 +24,6 @@ statementlist : statement statementlist
               | statement
               ;
 
-statement : T { std::cout << "Token"; }
+statement : TOKEN { pushToken($1); }
           ;
 
-%%
