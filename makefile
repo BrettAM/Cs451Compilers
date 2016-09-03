@@ -5,7 +5,9 @@ TDIR=test
 
 MAKEFLAGS += --no-builtin-rules
 
-CFLAGS=-Wall -g -O2 -std=gnu++11
+WARN_PARSER=
+WARN_CODE=-Wall
+CFLAGS=-g -O2 -std=gnu++11
 LDFLAGS=
 
 TESTLIB=-I/usr/local/include/UnitTest++ -lUnitTest++
@@ -24,7 +26,7 @@ CPPS ::= $(shell find $(SDIR) -name "*.cpp" -not -samefile "$(MAIN)") \
 			 $(ODIR)/parser.cpp $(ODIR)/lex.cpp
 HPPS ::= $(shell find $(SDIR) -name "*.hpp")
 TESTS::= $(shell find $(TDIR) -name "*.cpp")
-OBJS ::= $(addprefix $(ODIR)/,$(CPPS:.cpp=.o))
+OBJS ::= $(addprefix $(ODIR)/,$(notdir $(CPPS:.cpp=.o)))
 INC  ::= -I$(SDIR) -I$(ODIR)
 
 FLEX ::= $(SDIR)/parser.l
@@ -36,9 +38,9 @@ run: $(EXECUTABLE)
 	./$(EXECUTABLE)
 
 init:
-	mkdir -p $(ODIR)/$(SDIR) $(ODIR)/$(ODIR)
+	mkdir -p $(ODIR)
 
-$(ODIR)/parser.%: $(BISON) $(HPPS)
+$(ODIR)/parser.hpp $(ODIR)/parser.cpp: $(BISON) $(HPPS)
 	bison \
 		--defines=$(ODIR)/parser.hpp \
 		--output=$(ODIR)/parser.cpp \
@@ -47,11 +49,14 @@ $(ODIR)/parser.%: $(BISON) $(HPPS)
 $(ODIR)/lex.cpp: $(FLEX) $(HPPS) $(ODIR)/parser.hpp
 	flex --outfile=$(ODIR)/lex.cpp $(FLEX)
 
-$(ODIR)/%.o: %.cpp
-	$(CC) -c $(INC) -o $@ $< $(CFLAGS)
+$(ODIR)/%.o: $(SDIR)/%.cpp
+	$(CC) $(WARN_CODE) $(INC) $(CFLAGS) -c -o $@ $<
+
+$(ODIR)/%.o: $(ODIR)/%.cpp
+	$(CC) $(WARN_PARSER) $(INC) $(CFLAGS) -c -o $@ $<
 
 $(EXECUTABLE): $(MAIN) $(HPPS) $(OBJS)
-	$(CC) $(INC) $(LDFLAGS) $(CFLAGS) $(MAIN) $(OBJS) -o $@
+	$(CC)  $(WARN_CODE) $(INC) $(CFLAGS) $(LDFLAGS) $(MAIN) $(OBJS) -o $@
 
 test: $(OBJS) $(TESTS)
 	$(CC) $(CFLAGS) $(TESTS) $(INC) $(TESTLIB) $(OBJS) -o $(TESTCMD)
