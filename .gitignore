@@ -30,6 +30,8 @@
 
 build/*
 compiler
+c-
+results.txt
 testrunner
 BrettAM.tar
 assignmentData

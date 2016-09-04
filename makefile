@@ -13,7 +13,7 @@ LDFLAGS=
 TESTLIB=-I/usr/local/include/UnitTest++ -lUnitTest++
 TESTCMD=testrunner
 
-EXECUTABLE?=compiler
+EXECUTABLE?=c-
 OUTPUTTAR?=BrettAM.tar
 
 NAME?=menzies
