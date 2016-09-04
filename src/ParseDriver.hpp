@@ -2,6 +2,7 @@
 #define PARSEDRIVER_H
 
 #include <vector>
+#include <algorithm>
 #include <stdio.h>
 #include <iostream>
 #include "Token.hpp"
@@ -14,12 +15,11 @@ namespace ParseDriver {
     /**
      *
      */
-    void pushToken(Token*);
-
+    void pushError(const char *);
     /**
      *
      */
-    void pushError(const char *);
+    std::vector<Token*>* getResVec();
 
     // Functions below for use by the project
 

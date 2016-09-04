@@ -1,5 +1,6 @@
 %{
 #include "Token.hpp"
+#include <vector>
 #include "parser.hpp" // must be included last
 %}
 
