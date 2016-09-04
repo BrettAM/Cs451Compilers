@@ -7,7 +7,7 @@ MAKEFLAGS += --no-builtin-rules
 
 WARN_PARSER=
 WARN_CODE=-Wall
-CFLAGS=-g -O2 -std=gnu++11
+CFLAGS=-g -O2 -std=gnu++98
 LDFLAGS=
 
 TESTLIB=-I/usr/local/include/UnitTest++ -lUnitTest++
@@ -19,18 +19,18 @@ OUTPUTTAR?=BrettAM.tar
 NAME?=menzies
 SUBMITURL?="http://ec2-52-89-93-46.us-west-2.compute.amazonaws.com/cgi-bin/fileCapture.py"
 ASSIGNMENT?=1
-ASSIGNMENT_STRING::=CS445 F16 Assignment $(ASSIGNMENT)
+ASSIGNMENT_STRING:=CS445 F16 Assignment $(ASSIGNMENT)
 
-MAIN ::= $(SDIR)/main.cpp
-CPPS ::= $(shell find $(SDIR) -name "*.cpp" -not -samefile "$(MAIN)") \
+MAIN := $(SDIR)/main.cpp
+CPPS := $(shell find $(SDIR) -name "*.cpp" -not -samefile "$(MAIN)") \
 			 $(ODIR)/parser.cpp $(ODIR)/lex.cpp
-HPPS ::= $(shell find $(SDIR) -name "*.hpp")
-TESTS::= $(shell find $(TDIR) -name "*.cpp")
-OBJS ::= $(addprefix $(ODIR)/,$(notdir $(CPPS:.cpp=.o)))
-INC  ::= -I$(SDIR) -I$(ODIR)
+HPPS := $(shell find $(SDIR) -name "*.hpp")
+TESTS:= $(shell find $(TDIR) -name "*.cpp")
+OBJS := $(addprefix $(ODIR)/,$(notdir $(CPPS:.cpp=.o)))
+INC  := -I$(SDIR) -I$(ODIR)
 
-FLEX ::= $(SDIR)/parser.l
-BISON ::= $(SDIR)/parser.y
+FLEX := $(SDIR)/parser.l
+BISON := $(SDIR)/parser.y
 
 all: init $(EXECUTABLE)
 
