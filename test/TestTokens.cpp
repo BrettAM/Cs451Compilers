@@ -7,6 +7,13 @@ TEST(TokenConstructor){
     Token t(0, 0, "");
 }
 
+TEST(TokenEquals){
+    CHECK(Token(0,1,"A") == Token(0,1,"A"));
+    CHECK(Token(0,5,"B") == Token(0,5,"B"));
+    CHECK(!(Token(0,5,"C") == Token(0,5,"B")));
+    CHECK(!(Token(0,1,"C") == Token(0,2,"C")));
+}
+
 TEST(TokenStringFormat){
     CHECK_EQUAL("Line 46 Token: *", Token(0,46,"*").toString());
     CHECK_EQUAL("Line 74 Token: -", Token(0,74,"-").toString());
@@ -16,6 +23,13 @@ TEST(TokenStringFormat){
 
 TEST(CharconstConstructor){
     CharConst c(0, 46, "a");
+}
+
+TEST(CharcostEquals){
+    CHECK(CharConst(0,1,"A") == CharConst(0,1,"A"));
+    CHECK(CharConst(0,5,"\\n") == CharConst(0,5,"\\n"));
+    CHECK(!(CharConst(0,5,"C") == CharConst(0,5,"B")));
+    CHECK(!(CharConst(0,1,"\\0") == CharConst(0,2,"\\0")));
 }
 
 TEST(CharConstStringFormat){
@@ -34,6 +48,13 @@ TEST(IdConstructor){
     ID id(0, 10, "dogs");
 }
 
+TEST(IdEquals){
+    CHECK(ID(0,1,"A") == ID(0,1,"A"));
+    CHECK(ID(0,5,"\\n") == ID(0,5,"\\n"));
+    CHECK(!(ID(0,5,"C") == ID(0,5,"B")));
+    CHECK(!(ID(0,1,"\\0") == ID(0,2,"\\0")));
+}
+
 TEST(IdStringFormat){
     CHECK_EQUAL("Line 25 Token: ID Value: cats",
                 ID(0, 25, "cats").toString());
@@ -45,6 +66,13 @@ TEST(IdStringFormat){
 
 TEST(NumConstConstructor){
     NumConst nc(0, 44, "10");
+}
+
+TEST(NumConstEquals){
+    CHECK(NumConst(0,1,"123") == NumConst(0,1,"123"));
+    CHECK(NumConst(0,5,"456") == NumConst(0,5,"456"));
+    CHECK(!(NumConst(0,5,"123") == NumConst(0,5,"456")));
+    CHECK(!(NumConst(0,1,"0") == NumConst(0,2,"0")));
 }
 
 TEST(NumConstFormat){
@@ -69,6 +97,13 @@ TEST(BoolConstConstructor){
     BoolConst bc(0, 77, "true");
 }
 
+TEST(BoolConstEquals){
+    CHECK(BoolConst(0,1,"true") == BoolConst(0,1,"true"));
+    CHECK(BoolConst(0,5,"false") == BoolConst(0,5,"false"));
+    CHECK(!(BoolConst(0,5,"true") == BoolConst(0,5,"false")));
+    CHECK(!(BoolConst(0,1,"false") == BoolConst(0,2,"false")));
+}
+
 TEST(BoolConstFormat){
     CHECK_EQUAL("Line 43 Token: BOOLCONST Value: 1  Input: true",
         BoolConst(0,43,"true").toString());
@@ -80,6 +115,13 @@ TEST(InvalidConstructor){
     Invalid iv(0,0,"@");
 }
 
+TEST(InvalidEquals){
+    CHECK(Invalid(0,1,"true") == Invalid(0,1,"true"));
+    CHECK(Invalid(0,5,"false") == Invalid(0,5,"false"));
+    CHECK(!(Invalid(0,5,"true") == Invalid(0,5,"false")));
+    CHECK(!(Invalid(0,1,"false") == Invalid(0,2,"false")));
+}
+
 TEST(InvalidFormat){
     CHECK_EQUAL("ERROR(38): Invalid or misplaced input character: \"_\"",
                 Invalid(0,38,"_").toString());
@@ -87,4 +129,10 @@ TEST(InvalidFormat){
                 Invalid(0,31,"@").toString());
     CHECK_EQUAL("ERROR(9): Invalid or misplaced input character: \"\'\"",
                 Invalid(0,9,"\'").toString());
+}
+
+TEST(SubclassInequalityInvariant){
+    CHECK(!(BoolConst(0,1,"true")==ID(0,1,"true")));
+    CHECK(!(Token(0,1,"12")==NumConst(0,1,"true")));
+    CHECK(!(Invalid(0,1,"@")==CharConst(0,1,"t")));
 }

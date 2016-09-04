@@ -19,6 +19,14 @@ public:
         oss << "Line " << line << " Token: " << text;
         return oss.str();
     }
+
+    bool operator==(const Token& r) const {
+        return this->equals(r);
+    }
+protected:
+    virtual bool equals(const Token& t) const {
+        return token==t.token && line==t.line && text==t.text;
+    }
 };
 
 class CharConst : public Token {
@@ -32,6 +40,13 @@ public:
             << "\'  Input: \'" << text << "\'";
         return oss.str();
     }
+protected:
+    bool equals(const Token& r) const {
+        if(CharConst const * p = dynamic_cast<CharConst const *>(&r)){
+            return Token::equals(r) && literal == p->literal;
+        }
+        return false;
+    }
 };
 
 class NumConst : public Token {
@@ -44,6 +59,13 @@ public:
         oss << "Line " << line << " Token: NUMCONST Value: " << value
             << "  Input: " << text;
         return oss.str();
+    }
+protected:
+    bool equals(const Token& r) const {
+        if(NumConst const * p = dynamic_cast<NumConst const *>(&r)){
+            return Token::equals(r) && value == p->value;
+        }
+        return false;
     }
 };
 
@@ -60,6 +82,13 @@ public:
             << "  Input: " << text;
         return oss.str();
     }
+protected:
+    bool equals(const Token& r) const {
+        if(BoolConst const * p = dynamic_cast<BoolConst const *>(&r)){
+            return Token::equals(r) && value == p->value;
+        }
+        return false;
+    }
 };
 
 class ID : public Token {
@@ -70,6 +99,13 @@ public:
         std::ostringstream oss;
         oss << "Line " << line << " Token: ID Value: " << text;
         return oss.str();
+    }
+protected:
+    bool equals(const Token& r) const {
+        if(ID const * p = dynamic_cast<ID const *>(&r)){
+            return Token::equals(r);
+        }
+        return false;
     }
 };
 
@@ -82,6 +118,13 @@ public:
         oss << "ERROR(" << line << "): Invalid or misplaced input character: \""
             << text << "\"";
         return oss.str();
+    }
+protected:
+    bool equals(const Token& r) const {
+        if(Invalid const * p = dynamic_cast<Invalid const *>(&r)){
+            return Token::equals(r);
+        }
+        return false;
     }
 };
 
