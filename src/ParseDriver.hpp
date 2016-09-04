@@ -24,6 +24,7 @@ namespace ParseDriver {
     // Functions below for use by the project
 
     Result run(const char* str);
+    Result run(FILE* f);
 }
 
 #endif

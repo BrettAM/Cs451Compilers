@@ -25,9 +25,11 @@ void yyerror(const char *msg){
 %token <token> BOOL
 %token <token> CHAR
 %token <token> IF
+%token <token> ELSE
 %token <token> WHILE
 %token <token> RETURN
 %token <token> BREAK
+%token <token> RECORD
 %token <token> NOTEQ
 %token <token> MULASS
 %token <token> INC
@@ -42,7 +44,25 @@ void yyerror(const char *msg){
 %token <token> AND
 %token <token> OR
 %token <token> MISPLACED
-
+%token <token> '('
+%token <token> ')'
+%token <token> '['
+%token <token> ']'
+%token <token> '{'
+%token <token> '}'
+%token <token> ';'
+%token <token> '='
+%token <token> '<'
+%token <token> '>'
+%token <token> '+'
+%token <token> '-'
+%token <token> '*'
+%token <token> '/'
+%token <token> '%'
+%token <token> '?'
+%token <token> '.'
+%token <token> ','
+%token <token> ':'
 %%
 
 statementlist : statement statementlist
@@ -58,9 +78,11 @@ statement : ID { pushToken($1); }
           | BOOL { pushToken($1); }
           | CHAR { pushToken($1); }
           | IF { pushToken($1); }
+          | ELSE { pushToken($1); }
           | WHILE { pushToken($1); }
           | RETURN { pushToken($1); }
           | BREAK { pushToken($1); }
+          | RECORD { pushToken($1); }
           | NOTEQ { pushToken($1); }
           | MULASS { pushToken($1); }
           | INC { pushToken($1); }
@@ -75,4 +97,23 @@ statement : ID { pushToken($1); }
           | AND { pushToken($1); }
           | OR { pushToken($1); }
           | MISPLACED { pushToken($1); }
+          | '(' { pushToken($1); }
+          | ')' { pushToken($1); }
+          | '[' { pushToken($1); }
+          | ']' { pushToken($1); }
+          | '{' { pushToken($1); }
+          | '}' { pushToken($1); }
+          | ';' { pushToken($1); }
+          | '=' { pushToken($1); }
+          | '<' { pushToken($1); }
+          | '>' { pushToken($1); }
+          | '+' { pushToken($1); }
+          | '-' { pushToken($1); }
+          | '*' { pushToken($1); }
+          | '/' { pushToken($1); }
+          | '%' { pushToken($1); }
+          | '?' { pushToken($1); }
+          | '.' { pushToken($1); }
+          | ',' { pushToken($1); }
+          | ':' { pushToken($1); }
           ;

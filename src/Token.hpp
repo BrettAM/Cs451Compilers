@@ -3,6 +3,7 @@
 
 #include <string>
 #include <sstream>
+#include <iostream>
 #include "TextUtils.hpp"
 
 class Token{
@@ -14,7 +15,7 @@ public:
     const int token;
     const int line;
     const std::string text;
-    virtual std::string toString(){
+    virtual std::string toString() const {
         std::ostringstream oss;
         oss << "Line " << line << " Token: " << text;
         return oss.str();
@@ -28,13 +29,15 @@ protected:
         return token==t.token && line==t.line && text==t.text;
     }
 };
+std::ostream& operator<<(std::ostream&, const Token&);
+std::ostream& operator<<(std::ostream&, const Token*);
 
 class CharConst : public Token {
 public:
     const char literal;
     CharConst(int token, int line, cstr str):
         Token(token, line, str), literal(TextUtils::unescape(str+1)) {}
-    std::string toString(){
+    std::string toString() const{
         std::ostringstream oss;
         oss << "Line " << line << " Token: CHARCONST Value: \'" << literal
             << "\'  Input: " << text;
@@ -54,7 +57,7 @@ public:
     const int32_t value;
     NumConst(int token, int line, cstr str):
         Token(token, line, str), value(atoi(str)) {}
-    std::string toString(){
+    std::string toString() const{
         std::ostringstream oss;
         oss << "Line " << line << " Token: NUMCONST Value: " << value
             << "  Input: " << text;
@@ -76,7 +79,7 @@ public:
     const bool value;
     BoolConst(int token, int line, cstr str):
         Token(token, line, str), value(atob(str)) {}
-    std::string toString(){
+    std::string toString() const{
         std::ostringstream oss;
         oss << "Line " << line << " Token: BOOLCONST Value: " << value
             << "  Input: " << text;
@@ -95,7 +98,7 @@ class IdToken : public Token {
 public:
     IdToken(int token, int line, cstr str):
         Token(token, line, str) {}
-    std::string toString(){
+    std::string toString() const{
         std::ostringstream oss;
         oss << "Line " << line << " Token: ID Value: " << text;
         return oss.str();
@@ -113,7 +116,7 @@ class Invalid : public Token {
 public:
     Invalid(int token, int line, cstr str):
         Token(token, line, str) {}
-    std::string toString(){
+    std::string toString() const{
         std::ostringstream oss;
         oss << "ERROR(" << line << "): Invalid or misplaced input character: \""
             << text << "\"";

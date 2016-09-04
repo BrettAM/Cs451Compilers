@@ -4,9 +4,20 @@
 using namespace std;
 
 int main(int argc, char const *argv[]) {
-    ParseDriver::Result r = ParseDriver::run("TokenTokenToken");
+    FILE* input = stdin;
+    if(argc == 2){
+        input = fopen(argv[1], "r");
+        if(input == NULL) {
+            cout << "ERROR reading file " << argv[1] << endl;
+            exit(1);
+        }
+    }
+
+    ParseDriver::Result r = ParseDriver::run(input);
     for(vector<Token*>::iterator itr = r.begin(); itr != r.end(); ++itr){
         cout << (*itr)->toString() << endl;
     }
+
+    if(input != stdin) fclose(input);
     return 0;
 }
