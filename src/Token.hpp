@@ -33,11 +33,11 @@ class CharConst : public Token {
 public:
     const char literal;
     CharConst(int token, int line, cstr str):
-        Token(token, line, str), literal(TextUtils::unescape(str)) {}
+        Token(token, line, str), literal(TextUtils::unescape(str+1)) {}
     std::string toString(){
         std::ostringstream oss;
         oss << "Line " << line << " Token: CHARCONST Value: \'" << literal
-            << "\'  Input: \'" << text << "\'";
+            << "\'  Input: " << text;
         return oss.str();
     }
 protected:
@@ -91,9 +91,9 @@ protected:
     }
 };
 
-class ID : public Token {
+class IdToken : public Token {
 public:
-    ID(int token, int line, cstr str):
+    IdToken(int token, int line, cstr str):
         Token(token, line, str) {}
     std::string toString(){
         std::ostringstream oss;
@@ -102,7 +102,7 @@ public:
     }
 protected:
     bool equals(const Token& r) const {
-        if(ID const * p = dynamic_cast<ID const *>(&r)){
+        if(dynamic_cast<IdToken const *>(&r)){
             return Token::equals(r);
         }
         return false;
@@ -121,7 +121,7 @@ public:
     }
 protected:
     bool equals(const Token& r) const {
-        if(Invalid const * p = dynamic_cast<Invalid const *>(&r)){
+        if(dynamic_cast<Invalid const *>(&r)){
             return Token::equals(r);
         }
         return false;

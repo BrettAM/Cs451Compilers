@@ -34,34 +34,34 @@ TEST(CharcostEquals){
 
 TEST(CharConstStringFormat){
     CHECK_EQUAL("Line 2 Token: CHARCONST Value: \'x\'  Input: \'x\'",
-                CharConst(0, 2, "x").toString());
+                CharConst(0, 2, "\'x\'").toString());
     CHECK_EQUAL("Line 5 Token: CHARCONST Value: \'\"\'  Input: \'\\\"\'",
-                CharConst(0, 5, "\\\"").toString());
+                CharConst(0, 5, "\'\\\"\'").toString());
 
     std::ostringstream oss;
     oss << "Line 7 Token: CHARCONST Value: \'" << '\0' << "\'  Input: \'\\0\'";
     CHECK_EQUAL(oss.str(),
-                CharConst(0, 7, "\\0").toString());
+                CharConst(0, 7, "\'\\0\'").toString());
 }
 
 TEST(IdConstructor){
-    ID id(0, 10, "dogs");
+    IdToken IdToken(0, 10, "dogs");
 }
 
-TEST(IdEquals){
-    CHECK(ID(0,1,"A") == ID(0,1,"A"));
-    CHECK(ID(0,5,"\\n") == ID(0,5,"\\n"));
-    CHECK(!(ID(0,5,"C") == ID(0,5,"B")));
-    CHECK(!(ID(0,1,"\\0") == ID(0,2,"\\0")));
+TEST(IdTokenEquals){
+    CHECK(IdToken(0,1,"A") == IdToken(0,1,"A"));
+    CHECK(IdToken(0,5,"\\n") == IdToken(0,5,"\\n"));
+    CHECK(!(IdToken(0,5,"C") == IdToken(0,5,"B")));
+    CHECK(!(IdToken(0,1,"\\0") == IdToken(0,2,"\\0")));
 }
 
-TEST(IdStringFormat){
+TEST(IdTokenStringFormat){
     CHECK_EQUAL("Line 25 Token: ID Value: cats",
-                ID(0, 25, "cats").toString());
+                IdToken(0, 25, "cats").toString());
     CHECK_EQUAL("Line 90 Token: ID Value: redrum",
-                ID(0, 90, "redrum").toString());
+                IdToken(0, 90, "redrum").toString());
     CHECK_EQUAL("Line 89 Token: ID Value: AllWorkAndNoPlayMakesJackADullBoyAllWorkAndNoPlayMakesJackADullBoyAllWorkAndNoPlayMakesJackADullBoy",
-                ID(0, 89, "AllWorkAndNoPlayMakesJackADullBoyAllWorkAndNoPlayMakesJackADullBoyAllWorkAndNoPlayMakesJackADullBoy").toString());
+                IdToken(0, 89, "AllWorkAndNoPlayMakesJackADullBoyAllWorkAndNoPlayMakesJackADullBoyAllWorkAndNoPlayMakesJackADullBoy").toString());
 }
 
 TEST(NumConstConstructor){
@@ -132,7 +132,7 @@ TEST(InvalidFormat){
 }
 
 TEST(SubclassInequalityInvariant){
-    CHECK(!(BoolConst(0,1,"true")==ID(0,1,"true")));
+    CHECK(!(BoolConst(0,1,"true")==IdToken(0,1,"true")));
     CHECK(!(Token(0,1,"12")==NumConst(0,1,"true")));
     CHECK(!(Invalid(0,1,"@")==CharConst(0,1,"t")));
 }

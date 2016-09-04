@@ -8,3 +8,9 @@ char TextUtils::unescape(cstr s){
         default:  return s[1];
     }
 }
+
+std::string TextUtils::strip(cstr s){
+    std::string str(s);
+    return str.substr(1,str.length()-2);
+}
+
