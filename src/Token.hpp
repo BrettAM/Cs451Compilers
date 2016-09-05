@@ -14,6 +14,7 @@ public:
         token(token), line(line), text(str) {}
     Token(int token, int line, cstr str):
         token(token), line(line), text(str) {}
+    virtual ~Token() {}
     const int token;
     const int line;
     const std::string text;

@@ -18,6 +18,10 @@ int main(int argc, char const *argv[]) {
         cout << (*itr)->toString() << endl;
     }
 
+    for(vector<Token*>::iterator itr = r.begin(); itr!= r.end(); ++itr){
+        delete (*itr);
+    }
+
     if(input != stdin) fclose(input);
     return 0;
 }
