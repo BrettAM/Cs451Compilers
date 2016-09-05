@@ -1,7 +1,6 @@
 %{
 #include "Token.hpp"
-#include <vector>
-#include "parser.hpp" // must be included last
+#include "ParseDefines.hpp"
 %}
 
 %option noyywrap
