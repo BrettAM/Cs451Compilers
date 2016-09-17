@@ -1,6 +1,15 @@
 %{
 #include "Token.hpp"
 #include "ParseDefines.hpp"
+#include "ParseDriver.hpp"
+using namespace ParseDriver;
+/**
+ * Logs the token with ParseDriver and sets necessary fields for bison
+ * Pass in code for making a unique Token*. It will only by evaluated once.
+ */
+#define setlval(arg) \
+    do { yylval.token=arg; return pushToken(yylval.token); } while (false);
+
 %}
 
 %option noyywrap
@@ -8,38 +17,38 @@
 
 %%
 
-"return"         { yylval.token=new Token(RETURN, yylineno, "RETURN"); return RETURN; }
-"static"         { yylval.token=new Token(STATIC, yylineno, "STATIC"); return STATIC; }
-"int"            { yylval.token=new Token(INT, yylineno, "INT"); return INT; }
-"bool"           { yylval.token=new Token(BOOL, yylineno, "BOOL"); return BOOL; }
-"char"           { yylval.token=new Token(CHAR, yylineno, "CHAR"); return CHAR; }
-"if"             { yylval.token=new Token(IF, yylineno, "IF"); return IF; }
-"else"           { yylval.token=new Token(ELSE, yylineno, "ELSE"); return ELSE; }
-"while"          { yylval.token=new Token(WHILE, yylineno, "WHILE"); return WHILE; }
-"break"          { yylval.token=new Token(BREAK, yylineno, "BREAK"); return BREAK; }
-"record"         { yylval.token=new Token(RECORD, yylineno, "RECORD"); return RECORD; }
-"!="             { yylval.token=new Token(NOTEQ, yylineno, "NOTEQ"); return NOTEQ; }
-"*="             { yylval.token=new Token(MULASS, yylineno, "MULASS"); return MULASS; }
-"++"             { yylval.token=new Token(INC, yylineno, "INC"); return INC; }
-"+="             { yylval.token=new Token(ADDASS, yylineno, "ADDASS"); return ADDASS; }
-"--"             { yylval.token=new Token(DEC, yylineno, "DEC"); return DEC; }
-"-="             { yylval.token=new Token(SUBASS, yylineno, "SUBASS"); return SUBASS; }
-"/="             { yylval.token=new Token(DIVASS, yylineno, "DIVASS"); return DIVASS; }
-"<="             { yylval.token=new Token(LESSEQ, yylineno, "LESSEQ"); return LESSEQ; }
-"=="             { yylval.token=new Token(EQ, yylineno, "EQ"); return EQ; }
-">="             { yylval.token=new Token(GRTEQ, yylineno, "GRTEQ"); return GRTEQ; }
-"not"            { yylval.token=new Token(NOT, yylineno, "NOT"); return NOT; }
-"and"            { yylval.token=new Token(AND, yylineno, "AND"); return AND; }
-"or"             { yylval.token=new Token(OR, yylineno, "OR"); return OR; }
-("true"|"false") { yylval.token=new BoolConst(BOOLCONST, yylineno, yytext); return BOOLCONST; }
+"return"         { setlval(new Token(RETURN, yylineno, "RETURN")); }
+"static"         { setlval(new Token(STATIC, yylineno, "STATIC")); }
+"int"            { setlval(new Token(INT, yylineno, "INT")); }
+"bool"           { setlval(new Token(BOOL, yylineno, "BOOL")); }
+"char"           { setlval(new Token(CHAR, yylineno, "CHAR")); }
+"if"             { setlval(new Token(IF, yylineno, "IF")); }
+"else"           { setlval(new Token(ELSE, yylineno, "ELSE")); }
+"while"          { setlval(new Token(WHILE, yylineno, "WHILE")); }
+"break"          { setlval(new Token(BREAK, yylineno, "BREAK")); }
+"record"         { setlval(new Token(RECORD, yylineno, "RECORD")); }
+"!="             { setlval(new Token(NOTEQ, yylineno, "NOTEQ")); }
+"*="             { setlval(new Token(MULASS, yylineno, "MULASS")); }
+"++"             { setlval(new Token(INC, yylineno, "INC")); }
+"+="             { setlval(new Token(ADDASS, yylineno, "ADDASS")); }
+"--"             { setlval(new Token(DEC, yylineno, "DEC")); }
+"-="             { setlval(new Token(SUBASS, yylineno, "SUBASS")); }
+"/="             { setlval(new Token(DIVASS, yylineno, "DIVASS")); }
+"<="             { setlval(new Token(LESSEQ, yylineno, "LESSEQ")); }
+"=="             { setlval(new Token(EQ, yylineno, "EQ")); }
+">="             { setlval(new Token(GRTEQ, yylineno, "GRTEQ")); }
+"not"            { setlval(new Token(NOT, yylineno, "NOT")); }
+"and"            { setlval(new Token(AND, yylineno, "AND")); }
+"or"             { setlval(new Token(OR, yylineno, "OR")); }
+("true"|"false") { setlval(new BoolConst(BOOLCONST, yylineno, yytext)); }
 [\(\)\[\]\{\}\;\=\<\>\+\-\*\/\%\?\.\,\:] {
-                   yylval.token=new Token(yytext[0], yylineno, yytext); return yytext[0]; }
-\'(.|\\.)\'      { yylval.token=new CharConst(CHARCONST, yylineno, yytext); return CHARCONST; }
-[0-9]+           { yylval.token=new NumConst(NUMCONST, yylineno, yytext); return NUMCONST; }
+                   setlval(new Token(yytext[0], yylineno, yytext)); }
+\'(.|\\.)\'      { setlval(new CharConst(CHARCONST, yylineno, yytext)); }
+[0-9]+           { setlval(new NumConst(NUMCONST, yylineno, yytext)); }
 [a-zA-Z][a-zA-Z0-9]* {
-                   yylval.token=new IdToken(ID, yylineno, yytext); return ID; }
+                   setlval(new IdToken(ID, yylineno, yytext)); }
 ([\n\t ]*)|([\/]{2}.*) {
                    /* igroned whitespace characters */; }
-.                { yylval.token=new Invalid(MISPLACED, yylineno, yytext); return MISPLACED; }
+.                { pushToken(new Invalid(MISPLACED, yylineno, yytext)); }
 
 %%

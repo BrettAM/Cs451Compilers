@@ -19,7 +19,7 @@ namespace ParseDriver {
     /**
      *
      */
-    std::vector<Token*>* getResVec();
+    int pushToken(Token* t);
 
     // Functions below for use by the project
 

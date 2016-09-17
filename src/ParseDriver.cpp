@@ -11,20 +11,21 @@ extern void yy_delete_buffer(YY_BUFFER_STATE buffer);
 
 using namespace ParseDriver;
 
-namespace {
-    std::vector<Token*> results;
+namespace { // file local namespace
+    std::vector<Token*> tokenList;
 
     void setup(){
-        results = std::vector<Token*>();
+        tokenList = std::vector<Token*>();
     }
 
     Result teardown(){
-        return results;
+        return tokenList;
     }
 }
 
-std::vector<Token*>* ParseDriver::getResVec(){
-    return &results;
+int ParseDriver::pushToken(Token* t){
+    tokenList.push_back(t);
+    return t->token;
 }
 
 void ParseDriver::pushError(const char * msg){

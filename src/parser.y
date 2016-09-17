@@ -27,8 +27,8 @@ void yyerror(const char *msg){ pushError(msg); }
 %type <list> statementList
 %%
 
-statementList : statementList statement { $1->push_back($2); }
-              | statement               { $$ = getResVec(); $$->push_back($1); }
+statementList : statementList statement
+              | statement
               ;
 
 statement :ID|NUMCONST|CHARCONST|BOOLCONST
@@ -37,5 +37,4 @@ statement :ID|NUMCONST|CHARCONST|BOOLCONST
           |NOTEQ|MULASS|INC|ADDASS|DEC|SUBASS|DIVASS|LESSEQ|EQ|GRTEQ|NOT|AND|OR
           |'('|')'|'['|']'|'{'|'}'|'<'|'>'
           |';'|'='|'+'|'-'|'*'|'/'|'%'|'?'|'.'|','|':'
-          |MISPLACED
           ;
