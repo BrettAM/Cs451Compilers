@@ -1,7 +1,7 @@
 #include "UnitTest++/UnitTest++.h"
 #include "Token.hpp"
 #include "ParseDriver.hpp"
-#include "parser.hpp"
+#include "ParseDefines.hpp"
 #include <vector>
 using namespace std;
 

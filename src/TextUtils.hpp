@@ -2,6 +2,7 @@
 #define _H
 
 #include <string>
+#include <sstream>
 typedef const char * cstr;
 
 namespace TextUtils{

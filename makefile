@@ -8,6 +8,7 @@ MAKEFLAGS += --no-builtin-rules
 WARN_PARSER=
 WARN_CODE=-Wall
 CFLAGS=-g -O2 -std=gnu++98
+TESTFLAGS=-g -O2 -std=gnu++11
 LDFLAGS=
 
 TESTLIB=-I/usr/local/include/UnitTest++ -lUnitTest++
@@ -41,7 +42,7 @@ init:
 	mkdir -p $(ODIR)
 
 test: $(OBJS) $(TESTS)
-	$(CC) $(CFLAGS) $(TESTS) $(INC) $(TESTLIB) $(OBJS) -o $(TESTCMD)
+	$(CC) $(TESTFLAGS) $(TESTS) $(INC) $(TESTLIB) $(OBJS) -o $(TESTCMD)
 	./$(TESTCMD)
 
 tar: test

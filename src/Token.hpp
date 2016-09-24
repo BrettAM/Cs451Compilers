@@ -8,7 +8,7 @@
 #include <string>
 #include "TextUtils.hpp"
 
-class Token{
+class Token {
 public:
     Token(int token, int line, std::string str):
         token(token), line(line), text(str) {}
@@ -21,6 +21,12 @@ public:
     virtual std::string toString() const {
         std::ostringstream oss;
         oss << "Line " << line << " Token: " << text;
+        return oss.str();
+    }
+
+    std::string lineBox() const {
+        std::ostringstream oss;
+        oss << "[line: " << line << "]";
         return oss.str();
     }
 
