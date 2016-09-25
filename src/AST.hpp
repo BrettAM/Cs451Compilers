@@ -23,11 +23,19 @@ namespace AST{
     };
 
     /**
+     * Deletes a single node pointer
+     * Call node->postorder<&deletNode> to recursivly delete the AST
+     */
+    class Node;
+    void deleteNode(Node *);
+
+    /**
      * Abstract Base Class for all AST elements
      */
     class Node {
     public:
         const Token * token;
+        virtual ~Node(){};
         /**
          * Print the human readable description of this single node
          */
@@ -53,6 +61,22 @@ namespace AST{
                 out << "Child: " << i << "  ";
                 children.at(i)->formatTree(indentlvl+1, out);
             }
+        }
+        /**
+         * Call <OP> on each node after <OP> has been called on all its
+         * children
+         */
+        template <void (*OP)(Node*)> void postorder(){
+            for(int i=0, size=children.size(); i<size; i++){
+                children.at(i)->postorder<OP>();
+            }
+            OP(this);
+        }
+        /**
+         * Call to recursivly delete each tree node
+         */
+        void deleteTree() {
+            this->postorder<deleteNode>();
         }
     protected:
         std::vector<Node*> children;

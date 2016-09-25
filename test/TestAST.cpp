@@ -187,6 +187,8 @@ TEST(PrintFunction){
         "!   !   Child: 1  Const: 2 [line: 1]\n",
         node->formatTree()
     );
+
+    node->deleteTree();
 }
 
 
@@ -234,4 +236,6 @@ TEST(SiblingPrintFunction){
         "!   Child: 1  Id: x [line: 1]\n",
         node->formatTree()
     );
+
+    node->deleteTree();
 }

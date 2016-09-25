@@ -57,3 +57,6 @@ Node* AST::ReturnNode(const Token* t, Node* expr){
 Node* AST::Siblings(std::vector<Node*> sibs){
     return new SiblingList(sibs);
 }
+void AST::deleteNode(Node * p){
+    delete p;
+}
