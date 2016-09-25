@@ -54,3 +54,6 @@ Node* AST::WhileNode(const Token* t, Node* cond, Node* stmts){
 Node* AST::ReturnNode(const Token* t, Node* expr){
     return new Value(t, "Return ", false, listof<Node*>() << expr);
 }
+Node* AST::Siblings(std::vector<Node*> sibs){
+    return new SiblingList(sibs);
+}

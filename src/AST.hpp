@@ -4,19 +4,20 @@
 #include "Token.hpp"
 #include "Type.hpp"
 #include <list>
+#include <vector>
 
 namespace AST{
     template <typename T>
     class listof{
     private:
-        std::list<T> list;
+        std::vector<T> list;
     public:
         listof(){}
         listof<T> operator<<(T data){
             list.push_back(data);
             return *this;
         }
-        operator std::list<T>() const {
+        operator std::vector<T>() const {
             return list;
         }
     };
@@ -28,7 +29,7 @@ namespace AST{
     public:
         const Token * token;
         /**
-         *
+         * Print the human readable description of this single node
          */
         virtual std::string toString() const = 0;
         /**
@@ -37,10 +38,26 @@ namespace AST{
         bool operator==(const Node& n) const {
             return Node::equals(n) && this->equals(n);
         }
+        /**
+         * format the human readable description of the tree rooted here
+         */
+        std::string formatTree() {
+            std::ostringstream oss;
+            formatTree(0, oss);
+            return oss.str();
+        }
+        virtual void formatTree(int indentlvl, std::ostream& out) {
+            out << this->toString() << std::endl;
+            for(int i=0, size=children.size(); i<size; i++){
+                for(int indent=0; indent<indentlvl; indent++){ out << "!   "; }
+                out << "Child: " << i << "  ";
+                children.at(i)->formatTree(indentlvl+1, out);
+            }
+        }
     protected:
-        std::list<Node*> children;
+        std::vector<Node*> children;
         Node(const Token* token): token(token), children() {}
-        Node(const Token* token, const std::list<Node*>& children)
+        Node(const Token* token, const std::vector<Node*>& children)
             : token(token), children(children) {}
         virtual bool equals(const Node& n) const{
             return token==n.token && children==n.children;
@@ -49,13 +66,34 @@ namespace AST{
     std::ostream& operator<<(std::ostream&, const Node&);
     std::ostream& operator<<(std::ostream&, const Node*);
 
+    class SiblingList: public Node {
+    private:
+    public:
+        SiblingList(std::vector<Node*> children): Node(NULL, children) {}
+        std::string toString() const { return "Sibling List"; }
+        void formatTree(int indentlvl, std::ostream& out) {
+            if(children.size() == 0) return;
+            //out << children.at(0)->toString() << std::endl;
+            children.at(0)->formatTree(indentlvl, out);
+            for(int i=1, size=children.size(); i<size; i++){
+                for(int indent=1; indent<indentlvl; indent++){ out << "!   "; }
+                out << "Sibling: " << i-1 << "  ";
+                children.at(i)->formatTree(indentlvl, out);
+            }
+        }
+    protected:
+        virtual bool equals(const Node& n) const {
+            return dynamic_cast<SiblingList const *>(&n) != NULL;
+        }
+    };
+
     enum DeclType { VAR, PARAM, FUNC };
     class Decl: public Node {
     private:
         const DeclType dt;
         Type type;
     public:
-        Decl(DeclType dt, const IdToken* tok, Type type, std::list<Node*> ln):
+        Decl(DeclType dt, const IdToken* tok, Type type, std::vector<Node*> ln):
             Node(tok, ln), dt(dt), type(type) {}
         std::string toString() const {
             std::ostringstream oss;
@@ -82,7 +120,7 @@ namespace AST{
     class Record: public Node {
     private:
     public:
-        Record(const Token* token, std::list<Node*> children):
+        Record(const Token* token, std::vector<Node*> children):
             Node(token, children) {}
         std::string toString() const {
             std::ostringstream oss;
@@ -100,9 +138,9 @@ namespace AST{
         bool pt;
         cstr label;
     public:
-        Value(const Token* token, cstr label, std::list<Node*> children):
+        Value(const Token* token, cstr label, std::vector<Node*> children):
             Node(token, children), pt(true), label(label) {}
-        Value(const Token* token, cstr label, bool pt, std::list<Node*> children):
+        Value(const Token* token, cstr label, bool pt, std::vector<Node*> children):
             Node(token, children), pt(pt), label(label) {}
         std::string toString() const {
             std::ostringstream oss;
@@ -136,6 +174,7 @@ namespace AST{
     Node* IfNode(const Token* t, Node* cond, Node* tcase, Node* fcase);
     Node* WhileNode(const Token* t, Node* cond, Node* stmts);
     Node* ReturnNode(const Token* t, Node* expr);
+    Node* Siblings(std::vector<Node*> sibs);
 }
 
 #endif

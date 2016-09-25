@@ -141,3 +141,97 @@ TEST(PrintReturnNode){
                 node->toString());
     delete node;
 }
+
+TEST(PrintFunction){
+    auto x = IdToken(ID, 1, "x");
+    auto y = IdToken(ID, 1, "y");
+    auto z = IdToken(ID, 1, "z");
+    auto gr = Token('>', 1, ">");
+    auto eq = Token('=', 1, "=");
+    auto op = Token('{', 1, "{");
+    auto two = NumConst(NUMCONST, 1, "2");
+    auto ift = IdToken(IF, 1, "if");
+
+    auto node =
+        IfNode(&ift,
+            OpNode(
+                &gr,
+                IdNode(&x),
+                IdNode(&y)),
+            AssignNode(
+                &eq,
+                IdNode(&z),
+                IdNode(&x)),
+            Compound(
+                &op,
+                VarDecl(&z, Type::INT),
+                AssignNode(
+                    &eq,
+                    IdNode(&z),
+                    ConstNode(&two))
+                )
+            );
+
+    CHECK_EQUAL(
+        "If [line: 1]\n"
+        "Child: 0  Op: > [line: 1]\n"
+        "!   Child: 0  Id: x [line: 1]\n"
+        "!   Child: 1  Id: y [line: 1]\n"
+        "Child: 1  Assign: = [line: 1]\n"
+        "!   Child: 0  Id: z [line: 1]\n"
+        "!   Child: 1  Id: x [line: 1]\n"
+        "Child: 2  Compound [line: 1]\n"
+        "!   Child: 0  Var z of type int [line: 1]\n"
+        "!   Child: 1  Assign: = [line: 1]\n"
+        "!   !   Child: 0  Id: z [line: 1]\n"
+        "!   !   Child: 1  Const: 2 [line: 1]\n",
+        node->formatTree()
+    );
+}
+
+
+TEST(SiblingPrintFunction){
+    auto x = IdToken(ID, 1, "x");
+    auto y = IdToken(ID, 1, "y");
+    auto z = IdToken(ID, 1, "z");
+    auto gr = Token('>', 1, ">");
+    auto eq = Token('=', 1, "=");
+    auto op = Token('{', 1, "{");
+    auto two = NumConst(NUMCONST, 1, "2");
+    auto ift = IdToken(IF, 1, "if");
+
+    auto node =
+        Compound(
+            &op,
+            VarDecl(&z, Type::INT),
+            Siblings(listof<Node*>()
+                << AssignNode(
+                    &eq,
+                    IdNode(&z),
+                    ConstNode(&two))
+                << OpNode(
+                    &gr,
+                    IdNode(&x),
+                    IdNode(&y))
+                << AssignNode(
+                    &eq,
+                    IdNode(&z),
+                    IdNode(&x))
+                )
+            );
+
+    CHECK_EQUAL(
+        "Compound [line: 1]\n"
+        "Child: 0  Var z of type int [line: 1]\n"
+        "Child: 1  Assign: = [line: 1]\n"
+        "!   Child: 0  Id: z [line: 1]\n"
+        "!   Child: 1  Const: 2 [line: 1]\n"
+        "Sibling: 0  Op: > [line: 1]\n"
+        "!   Child: 0  Id: x [line: 1]\n"
+        "!   Child: 1  Id: y [line: 1]\n"
+        "Sibling: 1  Assign: = [line: 1]\n"
+        "!   Child: 0  Id: z [line: 1]\n"
+        "!   Child: 1  Id: x [line: 1]\n",
+        node->formatTree()
+    );
+}
