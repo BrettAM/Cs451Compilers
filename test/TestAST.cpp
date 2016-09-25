@@ -9,48 +9,135 @@ using namespace AST;
 
 TEST(PrintVarDecl){
     auto a = IdToken(ID,3,"a");
+    auto adecl = VarDecl(&a, Type::BOOL);
     CHECK_EQUAL("Var a of type bool [line: 3]",
-                Decl(VAR,&a,Type::BOOL).toString()
+                adecl->toString()
                 );
+    delete adecl;
     auto shaun = IdToken(ID,6,"shaun");
+    auto sdecl = VarDecl(&shaun, Type::INT.mkArray(0));
     CHECK_EQUAL("Var shaun is array of type int [line: 6]",
-                Decl(VAR,&shaun,Type::INT.mkArray(0)).toString()
+                sdecl->toString()
                 );
+    delete sdecl;
 }
 
 TEST(PrintFuncDecl){
     auto wallace = IdToken(ID,8,"wallace");
+    auto wdecl = FuncDecl(&wallace,Type::VOID, NULL, NULL);
     CHECK_EQUAL("Func wallace returns type void [line: 8]",
-                Decl(FUNC,&wallace,Type::VOID).toString()
+                wdecl->toString()
                 );
+    delete wdecl;
     auto penguin = IdToken(ID,55,"penguin");
+    auto pdecl = FuncDecl(&penguin,Type::BOOL, NULL, NULL);
     CHECK_EQUAL("Func penguin returns type bool [line: 55]",
-                Decl(FUNC,&penguin,Type::BOOL).toString()
+                pdecl->toString()
                 );
+    delete pdecl;
 }
 
 TEST(PrintParamDecl){
     auto feathers = IdToken(ID,55,"Feathers");
+    auto fdecl = Parameter(&feathers,Type::CHAR);
     CHECK_EQUAL("Param Feathers of type char [line: 55]",
-                Decl(PARAM,&feathers,Type::CHAR).toString()
+                fdecl->toString()
                 );
+    delete fdecl;
     auto yarn = IdToken(ID,75,"yarn");
+    auto ydecl = Parameter(&yarn,Type::INT.mkArray(0));
     CHECK_EQUAL("Param yarn is array of type int [line: 75]",
-                Decl(PARAM,&yarn,Type::INT.mkArray(0)).toString()
+                ydecl->toString()
                 );
+    delete ydecl;
 }
 
-TEST(TerminalValues){
+TEST(PrintIdNode){
     auto id = IdToken(ID, 13, "z");
+    auto node = IdNode(&id);
     CHECK_EQUAL("Id: z [line: 13]",
-                Value(&id).toString());
+                node->toString());
+    delete node;
+}
+
+TEST(PrintConstNode){
     auto chr = CharConst(CHARCONST, 113, "'t'");
-    CHECK_EQUAL("Const: 't' [line: 113]",
-                Value(&chr).toString());
     auto num = NumConst(NUMCONST, 15, "42");
-    CHECK_EQUAL("Const: 42 [line: 15]",
-                Value(&num).toString());
     auto bol = BoolConst(BOOLCONST, 89, "true");
+    auto chrNode = ConstNode(&chr);
+    auto numNode = ConstNode(&num);
+    auto bolNode = ConstNode(&bol);
+    CHECK_EQUAL("Const: 't' [line: 113]",
+                chrNode->toString());
+    CHECK_EQUAL("Const: 42 [line: 15]",
+                numNode->toString());
     CHECK_EQUAL("Const: true [line: 89]",
-                Value(&bol).toString());
+                bolNode->toString());
+    delete chrNode;
+    delete numNode;
+    delete bolNode;
+}
+
+TEST(PrintRecordNode){
+    auto token = IdToken(ID, 115, "Point");
+    auto node = RecordNode(&token, NULL);
+    CHECK_EQUAL("Record Point  [line: 115]",
+                node->toString());
+    delete node;
+}
+
+TEST(PrintCallNode){
+    auto token = IdToken(ID, 42, "wallace");
+    auto node = CallNode(&token, NULL);
+    CHECK_EQUAL("Call: wallace [line: 42]",
+                node->toString());
+    delete node;
+}
+
+TEST(PrintOpNode){
+    auto token = Token('-',42,"-");
+    auto node = OpNode(&token, NULL, NULL);
+    CHECK_EQUAL("Op: - [line: 42]",
+                node->toString());
+    delete node;
+}
+
+TEST(PrintAssignNode){
+    auto token = Token('=',46,"=");
+    auto node = AssignNode(&token, NULL, NULL);
+    CHECK_EQUAL("Assign: = [line: 46]",
+                node->toString());
+    delete node;
+}
+
+TEST(PrintCompoundNode){
+    auto token = Token('{',43,"{");
+    auto node = Compound(&token, NULL, NULL);
+    CHECK_EQUAL("Compound [line: 43]",
+                node->toString());
+    delete node;
+}
+
+TEST(PrintIfNode){
+    auto token = Token(IF,47,"if");
+    auto node = IfNode(&token, NULL, NULL, NULL);
+    CHECK_EQUAL("If [line: 47]",
+                node->toString());
+    delete node;
+}
+
+TEST(PrintWhileNode){
+    auto token = Token(WHILE,95,"while");
+    auto node = WhileNode(&token, NULL, NULL);
+    CHECK_EQUAL("While [line: 95]",
+                node->toString());
+    delete node;
+}
+
+TEST(PrintReturnNode){
+    auto token = Token(RETURN,95,"return");
+    auto node = ReturnNode(&token, NULL);
+    CHECK_EQUAL("Return [line: 95]",
+                node->toString());
+    delete node;
 }

@@ -41,7 +41,7 @@ run: $(EXECUTABLE)
 init:
 	mkdir -p $(ODIR)
 
-test: $(OBJS) $(TESTS)
+test: init $(OBJS) $(TESTS)
 	$(CC) $(TESTFLAGS) $(TESTS) $(INC) $(TESTLIB) $(OBJS) -o $(TESTCMD)
 	./$(TESTCMD)
 
