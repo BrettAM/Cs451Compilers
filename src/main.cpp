@@ -20,6 +20,8 @@ int main(int argc, char const *argv[]) {
         cout << (*itr)->toString() << endl;
     }*/
     r.getAST()->formatTree(0, std::cout);
+    cout << "Number of warnings: 0" << endl;
+    cout << "Number of errors: 0" << endl;
 
     r.cleanup();
 

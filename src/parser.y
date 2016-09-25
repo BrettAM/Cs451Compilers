@@ -35,7 +35,7 @@ void yyerror(const char *msg){ pushError(msg); }
 %type <node> declaration
 %type <node> recDeclaration
 %type <node> varDeclaration
-%type <node> scopedVarDeclaration
+%type <builder> scopedVarDeclaration
 %type <idCompList> varDeclList
 %type <idComp> varDeclInitialize
 %type <idComp> varDeclId
@@ -49,6 +49,9 @@ void yyerror(const char *msg){ pushError(msg); }
 %type <idCompList> paramIdList
 %type <idComp> paramId
 %type <node> statement
+%type <node> subStatement
+%type <node> matchedStmt
+%type <node> unmatchedStmt
 %type <node> compoundStmt
 %type <builder> localDeclarations
 %type <builder> statementList
@@ -112,7 +115,7 @@ varDeclaration : typeSpecifier varDeclList ';'
 
 scopedVarDeclaration : scopedTypeSpecifier varDeclList ';'
         {
-          listof<Node*> nodelist;
+          listof<Node*>* nodelist = new listof<Node*>();
           Type type = *$1;
           std::vector<IdComp> ids = *$2;
           delete $1;
@@ -120,7 +123,7 @@ scopedVarDeclaration : scopedTypeSpecifier varDeclList ';'
 
           for(int i=0; i<ids.size(); i++){
             IdComp id = ids.at(i);
-            nodelist.add(
+            nodelist->add(
               VarDecl(
                 id.id,
                 (id.arraylen == -1)? type : type.mkArray(id.arraylen),
@@ -128,7 +131,7 @@ scopedVarDeclaration : scopedTypeSpecifier varDeclList ';'
               )
             );
           }
-          $$ = Siblings(nodelist);
+          $$ = nodelist;
         };
 
 varDeclList : varDeclList ',' varDeclInitialize { $$ = $1->add($3); }
@@ -196,11 +199,32 @@ paramId : ID         { IdComp x = {$1, -1, NULL}; $$ = x; }
         | ID '[' ']' { IdComp x = {$1,  0, NULL}; $$ = x; }
         ;
 
-statement : expressionStmt
-          | compoundStmt
-          | returnStmt
-          | breakStmt /* selectionStmt iterationStmt */
+statement : matchedStmt
+          | unmatchedStmt
           ;
+
+subStatement : expressionStmt
+             | compoundStmt
+             | returnStmt
+             | breakStmt
+             ;
+
+matchedStmt : subStatement
+            | IF '(' simpleExpression ')' matchedStmt ELSE matchedStmt
+              { $$ = IfNode($1, $3, $5, $7); }
+            | WHILE '(' simpleExpression ')' matchedStmt
+              { $$ = WhileNode($1, $3, $5); }
+            ;
+
+unmatchedStmt : IF '(' simpleExpression ')' matchedStmt ELSE unmatchedStmt
+                { $$ = IfNode($1, $3, $5, $7); }
+              | IF '(' simpleExpression ')' matchedStmt
+                { $$ = IfNode($1, $3, $5, NULL); }
+              | IF '(' simpleExpression ')' unmatchedStmt
+                { $$ = IfNode($1, $3, $5, NULL); }
+              | WHILE '(' simpleExpression ')' unmatchedStmt
+                { $$ = WhileNode($1, $3, $5); }
+              ;
 
 compoundStmt : '{' localDeclarations statementList '}'
                {
@@ -210,7 +234,7 @@ compoundStmt : '{' localDeclarations statementList '}'
                }
              ;
 
-localDeclarations : localDeclarations scopedVarDeclaration { $$ = $1->add($2); }
+localDeclarations : localDeclarations scopedVarDeclaration { $$ = $1->addAll($2); delete $2; }
                   | /* empty */                            { $$ = (new listof<Node*>()); }
                   ;
 
