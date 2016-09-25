@@ -21,6 +21,12 @@ namespace AST{
             list.push_back(data);
             return this;
         }
+        listof<T>* addAll(listof<T>* other){
+            for(int i=0; i<other->list.size(); i++){
+                list.push_back(other->list.at(i));
+            }
+            return this;
+        }
         operator std::vector<T>() const {
             return list;
         }
@@ -32,6 +38,11 @@ namespace AST{
      */
     class Node;
     void deleteNode(Node *);
+
+    /**
+     * Returns a new vector that is a copy of the input except it omits nulls
+     */
+    std::vector<Node*> scrubNulls(const std::vector<Node*>& nodes);
 
     /**
      * Abstract Base Class for all AST elements
@@ -86,8 +97,9 @@ namespace AST{
         std::vector<Node*> children;
         Node(const Token* token): token(token), children() {}
         Node(const Token* token, const std::vector<Node*>& children)
-            : token(token), children(children) {}
-        virtual bool equals(const Node& n) const{
+            : token(token), children(scrubNulls(children)) {
+        }
+        virtual bool equals(const Node& n) const {
             return token==n.token && children==n.children;
         }
     };
@@ -100,8 +112,11 @@ namespace AST{
         SiblingList(std::vector<Node*> children): Node(NULL, children) {}
         std::string toString() const { return "Sibling List"; }
         void formatTree(int indentlvl, std::ostream& out) {
+            // if siblings are on the base line, they can't "retract" one level
+            // correctly without a cludge like this
+            if(indentlvl == 0) indentlvl++;
+
             if(children.size() == 0) return;
-            //out << children.at(0)->toString() << std::endl;
             children.at(0)->formatTree(indentlvl, out);
             for(int i=1, size=children.size(); i<size; i++){
                 for(int indent=1; indent<indentlvl; indent++){ out << "!   "; }
@@ -188,20 +203,21 @@ namespace AST{
         }
     };
 
-    Node* IdNode(const IdToken* id);
+    Node* IdNode(const Token* id);
     Node* ConstNode(const Token* t);
-    Node* RecordNode(const IdToken* id, Node* l);
-    Node* CallNode(const IdToken* id, Node* args);
+    Node* RecordNode(const Token* id, Node* l);
+    Node* CallNode(const Token* id, Node* args);
     Node* OpNode(const Token* t, Node* lhs, Node* rhs);
     Node* AssignNode(const Token* t, Node* lhs, Node* rhs);
-    Node* VarDecl(const IdToken* id, Type type);
-    Node* VarDecl(const IdToken* id, Type type, Node* initialvalue);
-    Node* Parameter(const IdToken* id, Type type);
-    Node* FuncDecl(const IdToken* id, Type rtntype, Node* params, Node* compnd);
+    Node* VarDecl(const Token* id, Type type);
+    Node* VarDecl(const Token* id, Type type, Node* initialvalue);
+    Node* Parameter(const Token* id, Type type);
+    Node* FuncDecl(const Token* id, Type rtntype, Node* params, Node* compnd);
     Node* Compound(const Token* t, Node* inits, Node* stmts);
     Node* IfNode(const Token* t, Node* cond, Node* tcase, Node* fcase);
     Node* WhileNode(const Token* t, Node* cond, Node* stmts);
     Node* ReturnNode(const Token* t, Node* expr);
+    Node* BreakNode(const Token* t);
     Node* Siblings(std::vector<Node*> sibs);
 }
 

@@ -14,11 +14,11 @@ int main(int argc, char const *argv[]) {
     }
 
     ParseDriver::Result r = ParseDriver::run(input);
-    const vector<const Token*>* t = r.getTokens();
+
+    /*const vector<const Token*>* t = r.getTokens();
     for(vector<const Token*>::const_iterator itr = t->begin(); itr != t->end(); ++itr){
         cout << (*itr)->toString() << endl;
-    }
-
+    }*/
     r.getAST()->formatTree(0, std::cout);
 
     r.cleanup();
