@@ -164,7 +164,7 @@ funDeclaration : typeSpecifier ID '(' params ')' statement { $$ = FuncDecl($2, *
                ;
 
 params : paramList   { $$ = Siblings(*($1)); delete $1; }
-       | /* empty */ { $$ = NULL; }
+       | /* empty */ { $$ = Leaf(); }
        ;
 
 paramList : paramList ';' paramTypeList { $$ = $1->addAll($3); delete $3; }
@@ -219,9 +219,9 @@ matchedStmt : subStatement
 unmatchedStmt : IF '(' simpleExpression ')' matchedStmt ELSE unmatchedStmt
                 { $$ = IfNode($1, $3, $5, $7); }
               | IF '(' simpleExpression ')' matchedStmt
-                { $$ = IfNode($1, $3, $5, NULL); }
+                { $$ = IfNode($1, $3, $5, Leaf()); }
               | IF '(' simpleExpression ')' unmatchedStmt
-                { $$ = IfNode($1, $3, $5, NULL); }
+                { $$ = IfNode($1, $3, $5, Leaf()); }
               | WHILE '(' simpleExpression ')' unmatchedStmt
                 { $$ = WhileNode($1, $3, $5); }
               ;
@@ -243,10 +243,10 @@ statementList : statementList statement { $$ = $1->add($2); }
               ;
 
 expressionStmt : expression ';'
-               | ';' { $$ = NULL; }
+               | ';' { $$ = Leaf(); }
                ;
 
-returnStmt : RETURN ';'            { $$ = ReturnNode($1, NULL); }
+returnStmt : RETURN ';'            { $$ = ReturnNode($1, Leaf()); }
            | RETURN expression ';' { $$ = ReturnNode($1, $2); }
            ;
 
@@ -258,8 +258,8 @@ expression : mutable '=' expression    { $$ = AssignNode($2, $1, $3); }
            | mutable SUBASS expression { $$ = AssignNode($2, $1, $3); }
            | mutable MULASS expression { $$ = AssignNode($2, $1, $3); }
            | mutable DIVASS expression { $$ = AssignNode($2, $1, $3); }
-           | mutable INC               { $$ = AssignNode($2, $1, NULL); }
-           | mutable DEC               { $$ = AssignNode($2, $1, NULL); }
+           | mutable INC               { $$ = AssignNode($2, $1, Leaf()); }
+           | mutable DEC               { $$ = AssignNode($2, $1, Leaf()); }
            | simpleExpression
            ;
 
@@ -271,7 +271,7 @@ andExpression : andExpression AND unaryRelExpression { $$ = OpNode($2, $1, $3); 
               | unaryRelExpression
               ;
 
-unaryRelExpression : NOT unaryRelExpression { $$ = OpNode($1, $2, NULL); }
+unaryRelExpression : NOT unaryRelExpression { $$ = OpNode($1, $2, Leaf()); }
                    | relExpression
                    ;
 
@@ -304,7 +304,7 @@ mulop :'*'
       |'%'
       ;
 
-unaryExpression : unaryop unaryExpression { $$ = OpNode($1, $2, NULL); }
+unaryExpression : unaryop unaryExpression { $$ = OpNode($1, $2, Leaf()); }
                 | factor
                 ;
 
@@ -331,7 +331,7 @@ call : ID '(' args ')' { $$ = CallNode($1, $3); }
      ;
 
 args : argList     { $$ = Siblings(*($1)); delete $1;}
-     | /* empty */ { $$ = NULL; }
+     | /* empty */ { $$ = Leaf(); }
      ;
 
 argList : argList ',' expression { $$ = $1->add($3); }

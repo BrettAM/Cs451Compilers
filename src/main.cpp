@@ -19,7 +19,7 @@ int main(int argc, char const *argv[]) {
     for(vector<const Token*>::const_iterator itr = t->begin(); itr != t->end(); ++itr){
         cout << (*itr)->toString() << endl;
     }*/
-    r.getAST()->formatTree(0, std::cout);
+    cout << r.getAST()->formatTree();
     cout << "Number of warnings: 0" << endl;
     cout << "Number of errors: 0" << endl;
 

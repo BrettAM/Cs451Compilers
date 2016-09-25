@@ -43,6 +43,10 @@ namespace AST{
      * Returns a new vector that is a copy of the input except it omits nulls
      */
     std::vector<Node*> scrubNulls(const std::vector<Node*>& nodes);
+    /**
+     * Returns a new vector that is a copy of the input except it deletes leaves
+     */
+    std::vector<Node*> scrubLeaves(const std::vector<Node*>& nodes);
 
     /**
      * Abstract Base Class for all AST elements
@@ -66,15 +70,16 @@ namespace AST{
          */
         std::string formatTree() {
             std::ostringstream oss;
-            formatTree(0, oss);
+            formatTree(0, "", oss);
             return oss.str();
         }
-        virtual void formatTree(int indentlvl, std::ostream& out) {
-            out << this->toString() << std::endl;
+        virtual void formatTree(int indentlvl, std::string prefix, std::ostream& out) {
+            out << prefix << this->toString() << std::endl;
             for(int i=0, size=children.size(); i<size; i++){
-                for(int indent=0; indent<indentlvl; indent++){ out << "!   "; }
-                out << "Child: " << i << "  ";
-                children.at(i)->formatTree(indentlvl+1, out);
+                std::ostringstream oss;
+                for(int indent=0; indent<indentlvl; indent++){ oss << "!   "; }
+                oss << "Child: " << i << "  ";
+                children.at(i)->formatTree(indentlvl+1, oss.str(), out);
             }
         }
         /**
@@ -109,19 +114,20 @@ namespace AST{
     class SiblingList: public Node {
     private:
     public:
-        SiblingList(std::vector<Node*> children): Node(NULL, children) {}
+        SiblingList(std::vector<Node*> children): Node(NULL, scrubLeaves(children)) {}
         std::string toString() const { return "Sibling List"; }
-        void formatTree(int indentlvl, std::ostream& out) {
+        void formatTree(int indentlvl, std::string prefix, std::ostream& out) {
             // if siblings are on the base line, they can't "retract" one level
             // correctly without a cludge like this
             if(indentlvl == 0) indentlvl++;
 
             if(children.size() == 0) return;
-            children.at(0)->formatTree(indentlvl, out);
+            children.at(0)->formatTree(indentlvl, prefix, out);
             for(int i=1, size=children.size(); i<size; i++){
-                for(int indent=1; indent<indentlvl; indent++){ out << "!   "; }
-                out << "Sibling: " << i-1 << "  ";
-                children.at(i)->formatTree(indentlvl, out);
+                std::ostringstream oss;
+                for(int indent=1; indent<indentlvl; indent++){ oss << "!   "; }
+                oss << "Sibling: " << i-1 << "  ";
+                children.at(i)->formatTree(indentlvl, oss.str(), out);
             }
         }
     protected:
@@ -203,6 +209,17 @@ namespace AST{
         }
     };
 
+    class LeafNode: public Node {
+    public:
+        LeafNode(): Node(NULL) {}
+        std::string toString() const { return ""; }
+        void formatTree(int indentlvl, std::string s, std::ostream& out) {}
+    protected:
+        virtual bool equals(const Node& n) const {
+            return dynamic_cast<LeafNode const *>(&n) != NULL;
+        }
+    };
+
     Node* IdNode(const Token* id);
     Node* ConstNode(const Token* t);
     Node* RecordNode(const Token* id, Node* l);
@@ -219,6 +236,7 @@ namespace AST{
     Node* ReturnNode(const Token* t, Node* expr);
     Node* BreakNode(const Token* t);
     Node* Siblings(std::vector<Node*> sibs);
+    Node* Leaf();
 }
 
 #endif

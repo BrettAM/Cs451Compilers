@@ -24,6 +24,20 @@ std::vector<Node*> AST::scrubNulls(const std::vector<Node*>& nodes){
     return result;
 }
 
+std::vector<Node*> AST::scrubLeaves(const std::vector<Node*>& nodes){
+    std::vector<Node*> result;
+    for(vector<Node*>::const_iterator itr = nodes.begin();
+        itr != nodes.end();
+        ++itr)
+      {
+        if( dynamic_cast<LeafNode const *>(*itr) == NULL )
+            result.push_back(*itr);
+        else
+            delete *itr;
+    }
+    return result;
+}
+
 Node* AST::IdNode(const Token* t){
     const IdToken* id = (IdToken*) t;
     return new Value(id, "Id: ", listof<Node*>());
@@ -78,8 +92,11 @@ Node* AST::BreakNode(const Token* t){
 }
 Node* AST::Siblings(std::vector<Node*> sibs){
     // empty sibling lists should be omitted from the tree
-    if(sibs.size() == 0) return NULL;
+    if(sibs.size() == 0) return Leaf();
     return new SiblingList(sibs);
+}
+Node* AST::Leaf(){
+    return new LeafNode();
 }
 void AST::deleteNode(Node * p){
     delete p;
