@@ -17,6 +17,10 @@ namespace AST{
             list.push_back(data);
             return *this;
         }
+        listof<T>* add(T data){
+            list.push_back(data);
+            return this;
+        }
         operator std::vector<T>() const {
             return list;
         }

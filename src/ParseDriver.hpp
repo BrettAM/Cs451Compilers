@@ -34,6 +34,10 @@ namespace ParseDriver {
      * Interface for flex to add a token pointer to the results
      */
     int pushToken(const Token* t);
+    /**
+     * Interface for bison to return the final AST
+     */
+    void rootAST(AST::Node * AST);
 
     ///////// functions below for use by the compiler ///////////
     /**

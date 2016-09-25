@@ -55,6 +55,10 @@ int ParseDriver::pushToken(const Token* t){
     return t->token;
 }
 
+void ParseDriver::rootAST(Node * AST){
+    ASTroot = AST;
+}
+
 void ParseDriver::pushError(const char * msg){
     std::cerr << "Error: " << msg << std::endl;
 }

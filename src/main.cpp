@@ -19,6 +19,8 @@ int main(int argc, char const *argv[]) {
         cout << (*itr)->toString() << endl;
     }
 
+    r.getAST()->formatTree(0, std::cout);
+
     r.cleanup();
 
     if(input != stdin) fclose(input);
