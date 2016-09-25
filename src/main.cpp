@@ -14,13 +14,12 @@ int main(int argc, char const *argv[]) {
     }
 
     ParseDriver::Result r = ParseDriver::run(input);
-    for(vector<Token*>::iterator itr = r.begin(); itr != r.end(); ++itr){
+    const vector<const Token*>* t = r.getTokens();
+    for(vector<const Token*>::const_iterator itr = t->begin(); itr != t->end(); ++itr){
         cout << (*itr)->toString() << endl;
     }
 
-    for(vector<Token*>::iterator itr = r.begin(); itr!= r.end(); ++itr){
-        delete (*itr);
-    }
+    r.cleanup();
 
     if(input != stdin) fclose(input);
     return 0;

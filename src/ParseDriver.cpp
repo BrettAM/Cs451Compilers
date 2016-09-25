@@ -10,21 +10,48 @@ extern void yy_switch_to_buffer ( YY_BUFFER_STATE new_buffer );
 extern void yy_delete_buffer(YY_BUFFER_STATE buffer);
 
 using namespace ParseDriver;
+using namespace AST;
 
-namespace { // file local namespace
-    std::vector<Token*> tokenList;
-
-    void setup(){
-        tokenList = std::vector<Token*>();
+void ParseDriver::Result::cleanup(){
+    // free all the tokens
+    for(std::vector<const Token*>::iterator itr = tokens->begin();
+            itr!= tokens->end();
+            ++itr){
+        delete (*itr);
     }
+    delete tokens;
+    tokens = NULL;
 
-    Result teardown(){
-        return tokenList;
+    // free all the tree nodes
+    if(AST != NULL) {
+        AST->deleteTree();
+        AST = NULL;
     }
 }
 
-int ParseDriver::pushToken(Token* t){
-    tokenList.push_back(t);
+namespace { // file local namespace
+    std::vector<const Token*>* tokenList;
+    AST::Node* ASTroot;
+
+    void setup(){
+        tokenList = new std::vector<const Token*>();
+        ASTroot = NULL;
+    }
+
+    Result teardown(){
+        Result result = Result(
+                tokenList,
+                (ASTroot!=NULL) ? ASTroot : Siblings(listof<Node*>())
+            );
+        // ownership of these pointers passed to result;
+        tokenList = NULL;
+        ASTroot = NULL;
+        return result;
+    }
+}
+
+int ParseDriver::pushToken(const Token* t){
+    tokenList->push_back(t);
     return t->token;
 }
 
@@ -32,7 +59,7 @@ void ParseDriver::pushError(const char * msg){
     std::cerr << "Error: " << msg << std::endl;
 }
 
-std::vector<Token*> ParseDriver::run(const char* str){
+Result ParseDriver::run(const char* str){
     YY_BUFFER_STATE buf = yy_scan_string(str);
 
     setup();
@@ -45,7 +72,7 @@ std::vector<Token*> ParseDriver::run(const char* str){
     return teardown();
 }
 
-std::vector<Token*> ParseDriver::run(FILE* f){
+Result ParseDriver::run(FILE* f){
     setup();
 
     yylineno = 1;
