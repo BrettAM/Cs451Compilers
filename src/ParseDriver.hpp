@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <stdio.h>
 #include <iostream>
+#include <map>
 #include "Token.hpp"
 #include "AST.hpp"
 
@@ -38,6 +39,14 @@ namespace ParseDriver {
      * Interface for bison to return the final AST
      */
     void rootAST(AST::Node * AST);
+    /**
+     * Add a record to the global id namespace
+     */
+    void pushGlobal(const Token* record);
+    /**
+     * Returns true if an id name matches a previously defined record
+     */
+    bool isRecord(cstr idname);
 
     ///////// functions below for use by the compiler ///////////
     /**

@@ -11,6 +11,7 @@ extern void yy_delete_buffer(YY_BUFFER_STATE buffer);
 
 using namespace ParseDriver;
 using namespace AST;
+using namespace std;
 
 void ParseDriver::Result::cleanup(){
     // free all the tokens
@@ -32,9 +33,12 @@ void ParseDriver::Result::cleanup(){
 namespace { // file local namespace
     std::vector<const Token*>* tokenList;
     AST::Node* ASTroot;
+    map<string,const Token *> globs;
+
 
     void setup(){
         tokenList = new std::vector<const Token*>();
+        globs = map<string,const Token *>();
         ASTroot = NULL;
     }
 
@@ -61,6 +65,14 @@ void ParseDriver::rootAST(Node * AST){
 
 void ParseDriver::pushError(const char * msg){
     std::cerr << "Error: " << msg << std::endl;
+}
+
+void ParseDriver::pushGlobal(const Token* record){
+    globs[string(record->text)]=record;
+}
+
+bool ParseDriver::isRecord(cstr idname){
+    return (globs[string(idname)] != NULL);
 }
 
 Result ParseDriver::run(const char* str){

@@ -13,6 +13,7 @@ void yyerror(const char *msg){ pushError(msg); }
 %}
 
 %no-lines
+%define parse.error verbose
 %union {
   const Token* token;
   AST::Node* node;
@@ -90,7 +91,13 @@ declaration : varDeclaration
             | recDeclaration
             ;
 
-recDeclaration : RECORD ID '{' localDeclarations '}' { $$ = RecordNode($2, Siblings(*($4))); delete $4; };
+recDeclaration : RECORD ID '{' localDeclarations '}'
+                 {
+                   pushGlobal($2);
+                   $$ = RecordNode($2, Siblings(*($4)));
+                   delete $4;
+                 }
+               ;
 
 varDeclaration : typeSpecifier varDeclList ';'
         {
