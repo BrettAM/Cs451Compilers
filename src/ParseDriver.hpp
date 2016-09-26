@@ -57,6 +57,10 @@ namespace ParseDriver {
      * Run a flex/bison pass over the contents of a file
      */
     Result run(FILE* f);
+    /**
+     * Enable debugging details in flex and bison
+     */
+     void enableDebug();
 }
 
 #endif

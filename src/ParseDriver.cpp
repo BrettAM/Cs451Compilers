@@ -3,6 +3,7 @@
 typedef struct yy_buffer_state * YY_BUFFER_STATE;
 extern int yyparse();
 extern int yylineno;
+extern int yydebug;
 extern FILE* yyin;
 extern YY_BUFFER_STATE yy_scan_string(const char * str);
 extern YY_BUFFER_STATE yy_create_buffer ( FILE *file, int size );
@@ -73,6 +74,10 @@ void ParseDriver::pushGlobal(const Token* record){
 
 bool ParseDriver::isRecord(cstr idname){
     return (globs[string(idname)] != NULL);
+}
+
+void ParseDriver::enableDebug(){
+    yydebug = 1;
 }
 
 Result ParseDriver::run(const char* str){

@@ -60,7 +60,7 @@ submit: tar
 		$(SUBMITURL)
 
 $(ODIR)/parser.hpp $(ODIR)/parser.cpp: $(BISON) $(HPPS)
-	bison \
+	bison --debug\
 		--defines=$(ODIR)/parser.hpp \
 		--output=$(ODIR)/parser.cpp \
 		$(BISON)
