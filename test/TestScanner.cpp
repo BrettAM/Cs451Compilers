@@ -17,7 +17,7 @@ TEST(SingleReservedToken){
     auto result = ParseDriver::run("while");
     auto r = result.getTokens();
     CHECK_EQUAL(1, r->size());
-    CHECK_EQUAL(Token(WHILE,1,"WHILE"), *r->at(0));
+    CHECK_EQUAL(Token(WHILE,1,"while"), *r->at(0));
     result.cleanup();
 }
 
@@ -78,7 +78,7 @@ TEST(AssignExpression){
     auto result = ParseDriver::run("int x = 52*3 > 4;");
     auto r = result.getTokens();
     CHECK_EQUAL(9, r->size());
-    CHECK_EQUAL(Token(INT,1,"INT"), *r->at(0));
+    CHECK_EQUAL(Token(INT,1,"int"), *r->at(0));
     CHECK_EQUAL(IdToken(ID,1,"x"), *r->at(1));
     CHECK_EQUAL(Token('=',1,"="), *r->at(2));
     CHECK_EQUAL(NumConst(NUMCONST,1,"52"), *r->at(3));

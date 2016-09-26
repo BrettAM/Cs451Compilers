@@ -17,29 +17,29 @@ using namespace ParseDriver;
 
 %%
 
-"return"         { setlval(new Token(RETURN, yylineno, "RETURN")); }
-"static"         { setlval(new Token(STATIC, yylineno, "STATIC")); }
-"int"            { setlval(new Token(INT, yylineno, "INT")); }
-"bool"           { setlval(new Token(BOOL, yylineno, "BOOL")); }
-"char"           { setlval(new Token(CHAR, yylineno, "CHAR")); }
-"if"             { setlval(new Token(IF, yylineno, "IF")); }
-"else"           { setlval(new Token(ELSE, yylineno, "ELSE")); }
-"while"          { setlval(new Token(WHILE, yylineno, "WHILE")); }
-"break"          { setlval(new Token(BREAK, yylineno, "BREAK")); }
-"record"         { setlval(new Token(RECORD, yylineno, "RECORD")); }
-"!="             { setlval(new Token(NOTEQ, yylineno, "NOTEQ")); }
-"*="             { setlval(new Token(MULASS, yylineno, "MULASS")); }
-"++"             { setlval(new Token(INC, yylineno, "INC")); }
-"+="             { setlval(new Token(ADDASS, yylineno, "ADDASS")); }
-"--"             { setlval(new Token(DEC, yylineno, "DEC")); }
-"-="             { setlval(new Token(SUBASS, yylineno, "SUBASS")); }
-"/="             { setlval(new Token(DIVASS, yylineno, "DIVASS")); }
-"<="             { setlval(new Token(LESSEQ, yylineno, "LESSEQ")); }
-"=="             { setlval(new Token(EQ, yylineno, "EQ")); }
-">="             { setlval(new Token(GRTEQ, yylineno, "GRTEQ")); }
-"not"            { setlval(new Token(NOT, yylineno, "NOT")); }
-"and"            { setlval(new Token(AND, yylineno, "AND")); }
-"or"             { setlval(new Token(OR, yylineno, "OR")); }
+"return"         { setlval(new Token(RETURN, yylineno, yytext)); }
+"static"         { setlval(new Token(STATIC, yylineno, yytext)); }
+"int"            { setlval(new Token(INT, yylineno, yytext)); }
+"bool"           { setlval(new Token(BOOL, yylineno, yytext)); }
+"char"           { setlval(new Token(CHAR, yylineno, yytext)); }
+"if"             { setlval(new Token(IF, yylineno, yytext)); }
+"else"           { setlval(new Token(ELSE, yylineno, yytext)); }
+"while"          { setlval(new Token(WHILE, yylineno, yytext)); }
+"break"          { setlval(new Token(BREAK, yylineno, yytext)); }
+"record"         { setlval(new Token(RECORD, yylineno, yytext)); }
+"!="             { setlval(new Token(NOTEQ, yylineno, yytext)); }
+"*="             { setlval(new Token(MULASS, yylineno, yytext)); }
+"++"             { setlval(new Token(INC, yylineno, yytext)); }
+"+="             { setlval(new Token(ADDASS, yylineno, yytext)); }
+"--"             { setlval(new Token(DEC, yylineno, yytext)); }
+"-="             { setlval(new Token(SUBASS, yylineno, yytext)); }
+"/="             { setlval(new Token(DIVASS, yylineno, yytext)); }
+"<="             { setlval(new Token(LESSEQ, yylineno, yytext)); }
+"=="             { setlval(new Token(EQ, yylineno, yytext)); }
+">="             { setlval(new Token(GRTEQ, yylineno, yytext)); }
+"not"            { setlval(new Token(NOT, yylineno, yytext)); }
+"and"            { setlval(new Token(AND, yylineno, yytext)); }
+"or"             { setlval(new Token(OR, yylineno, yytext)); }
 ("true"|"false") { setlval(new BoolConst(BOOLCONST, yylineno, yytext)); }
 [\(\)\[\]\{\}\;\=\<\>\+\-\*\/\%\?\.\,\:] {
                    setlval(new Token(yytext[0], yylineno, yytext)); }
