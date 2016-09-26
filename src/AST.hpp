@@ -150,11 +150,11 @@ namespace AST{
                 case VAR:   oss << "Var "; break;
                 case PARAM: oss << "Param "; break;
                 case FUNC:
-                    oss << "Func " << token->text << " returns type ";
+                    oss << "Func " << token->nodeLabel() << " returns type ";
                     oss << type.rawString() << " " << token->lineBox();
                     return oss.str();
             }
-            oss << token->text << type << " " << token->lineBox();
+            oss << token->nodeLabel() << type << " " << token->lineBox();
             return oss.str();
         }
     protected:
@@ -173,7 +173,7 @@ namespace AST{
             Node(token, children) {}
         std::string toString() const {
             std::ostringstream oss;
-            oss << "Record " << token->text << "  " << token->lineBox();
+            oss << "Record " << token->nodeLabel() << "  " << token->lineBox();
             return oss.str();
         }
     protected:
@@ -195,7 +195,7 @@ namespace AST{
             std::ostringstream oss;
             oss << label;
             if(pt){
-                oss << token->text << " ";
+                oss << token->nodeLabel() << " ";
             }
             oss << token->lineBox();
             return oss.str();

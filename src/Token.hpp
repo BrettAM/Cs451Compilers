@@ -18,12 +18,23 @@ public:
     const int token;
     const int line;
     const std::string text;
+    /**
+     * Text description of this token
+     */
     virtual std::string toString() const {
         std::ostringstream oss;
         oss << "Line " << line << " Token: " << text;
         return oss.str();
     }
-
+    /**
+     * Label for this token to appear in the AST listing
+     */
+    virtual std::string nodeLabel() const {
+        return text;
+    }
+    /**
+     * Box describing what line the token occurs on for AST listings
+     */
     std::string lineBox() const {
         std::ostringstream oss;
         oss << "[line: " << line << "]";
@@ -51,6 +62,10 @@ public:
         oss << "Line " << line << " Token: CHARCONST Value: \'" << literal
             << "\'  Input: " << text;
         return oss.str();
+    }
+    std::string nodeLabel() const {
+        char conv[4] = {'\'', literal, '\'', '\0'};
+        return std::string(conv);
     }
 protected:
     bool equals(const Token& r) const {

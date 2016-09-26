@@ -33,9 +33,9 @@ void yyerror(const char *msg){ pushError(msg); }
   ';' '=' '+' '-' '*' '/' '%' '?' '.' ',' ':'
 
 %type <builder> declarationList
-%type <node> declaration
+%type <builder> declaration
 %type <node> recDeclaration
-%type <node> varDeclaration
+%type <builder> varDeclaration
 %type <builder> scopedVarDeclaration
 %type <idCompList> varDeclList
 %type <idComp> varDeclInitialize
@@ -82,13 +82,13 @@ void yyerror(const char *msg){ pushError(msg); }
 
 program : declarationList { rootAST(Siblings(*($1))); delete $1;} ;
 
-declarationList : declarationList declaration { $$ = $1->add($2); }
-                | declaration { $$ = (new listof<Node*>())->add($1); }
+declarationList : declarationList declaration { $$ = $1->addAll($2); delete $2; }
+                | declaration { $$ = $1; }
                 ;
 
 declaration : varDeclaration
-            | funDeclaration
-            | recDeclaration
+            | funDeclaration { $$ = (new listof<Node*>)->add($1); }
+            | recDeclaration { $$ = (new listof<Node*>)->add($1); }
             ;
 
 recDeclaration : RECORD ID '{' localDeclarations '}'
@@ -101,7 +101,7 @@ recDeclaration : RECORD ID '{' localDeclarations '}'
 
 varDeclaration : typeSpecifier varDeclList ';'
         {
-          listof<Node*> nodelist;
+          listof<Node*>* nodelist = new listof<Node*>();
           Type type = *$1;
           std::vector<IdComp> ids = *$2;
           delete $1;
@@ -109,7 +109,7 @@ varDeclaration : typeSpecifier varDeclList ';'
 
           for(int i=0; i<ids.size(); i++){
             IdComp id = ids.at(i);
-            nodelist.add(
+            nodelist->add(
               VarDecl(
                 id.id,
                 (id.arraylen == -1)? type : type.mkArray(id.arraylen),
@@ -117,7 +117,7 @@ varDeclaration : typeSpecifier varDeclList ';'
               )
             );
           }
-          $$ = Siblings(nodelist);
+          $$ = nodelist;
         };
 
 scopedVarDeclaration : scopedTypeSpecifier varDeclList ';'
