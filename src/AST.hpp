@@ -220,16 +220,16 @@ namespace AST{
         }
     };
 
-    Node* IdNode(const Token* id);
+    Node* IdNode(const IdToken* id);
     Node* ConstNode(const Token* t);
-    Node* RecordNode(const Token* id, Node* l);
-    Node* CallNode(const Token* id, Node* args);
+    Node* RecordNode(const IdToken* id, Node* l);
+    Node* CallNode(const IdToken* id, Node* args);
     Node* OpNode(const Token* t, Node* lhs, Node* rhs);
     Node* AssignNode(const Token* t, Node* lhs, Node* rhs);
-    Node* VarDecl(const Token* id, Type type);
-    Node* VarDecl(const Token* id, Type type, Node* initialvalue);
-    Node* Parameter(const Token* id, Type type);
-    Node* FuncDecl(const Token* id, Type rtntype, Node* params, Node* compnd);
+    Node* VarDecl(const IdToken* id, Type type);
+    Node* VarDecl(const IdToken* id, Type type, Node* initialvalue);
+    Node* Parameter(const IdToken* id, Type type);
+    Node* FuncDecl(const IdToken* id, Type rtntype, Node* params, Node* compnd);
     Node* Compound(const Token* t, Node* inits, Node* stmts);
     Node* IfNode(const Token* t, Node* cond, Node* tcase, Node* fcase);
     Node* WhileNode(const Token* t, Node* cond, Node* stmts);

@@ -46,9 +46,14 @@ using namespace ParseDriver;
 \'(.|\\.)\'      { setlval(new CharConst(CHARCONST, yylineno, yytext)); }
 [0-9]+           { setlval(new NumConst(NUMCONST, yylineno, yytext)); }
 [a-zA-Z][a-zA-Z0-9]* {
-                   setlval(new IdToken( isRecord(yytext)? RECTYPE : ID, yylineno, yytext)); }
+                   yylval.idToken = new IdToken(
+                       isRecord(yytext)? RECTYPE : ID,
+                       yylineno,
+                       yytext);
+                   return pushToken(yylval.idToken);
+                 }
 ([\n\t ]*)|([\/]{2}.*) {
-                   /* igroned whitespace characters */; }
+                   /* ignored whitespace characters */; }
 .                { pushToken(new Invalid(MISPLACED, yylineno, yytext)); }
 
 %%
