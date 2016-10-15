@@ -8,8 +8,8 @@
 
 class Type{
 private:
-    const cstr raw;
-    const bool _array, _static;
+    cstr raw;
+    bool _array, _static;
     Type(cstr str, bool _array, bool _static):
         raw(str), _array(_array), _static(_static) {}
 public:
@@ -17,6 +17,7 @@ public:
     static const Type BOOL;
     static const Type VOID;
     static const Type CHAR;
+    static const Type NONE;
     static Type RECORD(/*record pointer*/){ return Type("record", false, false); }
     /** Return an array type of length `length` of this type */
     Type mkArray(int length) const {

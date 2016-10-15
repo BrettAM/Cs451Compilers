@@ -38,50 +38,138 @@ std::vector<Node*> AST::scrubLeaves(const std::vector<Node*>& nodes){
     return result;
 }
 
+/**
+ * This function in PrintStyle wraps `virtual print`
+ * It should set up the output stream and print elements common to all
+ * element lines
+ */
+std::string PrintStyle::toString(const Element* n){
+    std::ostringstream oss;
+    this->print(n, oss);
+    oss << " " << n->token->lineBox();
+    return oss.str();
+}
+
+/**
+ * Various different Elements have different styles of printing themselves
+ * but are not meaningfully different in many other ways, so each Elements is
+ * assigned a print style when created
+ */
+namespace Printers {
+    class LabelAndNamePrinter : public PrintStyle {
+    cstr label;
+    public:
+        LabelAndNamePrinter(cstr label): label(label) {}
+    protected:
+        void print(const Element* n, std::ostringstream& s){
+            s << label << n->token->nodeLabel();
+        }
+    };
+    class LabelPrinter : public PrintStyle {
+    cstr label;
+    public:
+        LabelPrinter(cstr label): label(label) {}
+    protected:
+        void print(const Element* n, std::ostringstream& s){
+            s << label;
+        }
+    };
+    class LabelAndTypePrinter : public PrintStyle {
+    cstr label;
+    public:
+        LabelAndTypePrinter(cstr label): label(label) {}
+    protected:
+        void print(const Element* n, std::ostringstream& s){
+            s << label << n->token->nodeLabel() << n->type;
+        }
+    };
+    class FuncDeclPrinter : public PrintStyle {
+    cstr label;
+    public:
+        FuncDeclPrinter(cstr label): label(label) {}
+    protected:
+        void print(const Element* n, std::ostringstream& s){
+            s << label << n->token->nodeLabel() << " returns type ";
+            s << n->type.rawString();
+        }
+    };
+    class RecordPrinter : public PrintStyle {
+    protected:
+        void print(const Element* n, std::ostringstream& s){
+            s << "Record " << n->token->nodeLabel() << " ";
+        }
+    };
+}
+
+using namespace Printers;
+
 Node* AST::IdNode(const IdToken* t){
-    return new Value(t, "Id: ", listof<Node*>());
+    static LabelAndNamePrinter printer("Id: ");
+    return new Element(VALUE, &printer, t, listof<Node*>());
 }
 Node* AST::ConstNode(const Token* t){
-    return new Value(t, "Const: ", listof<Node*>());
+    static LabelAndNamePrinter printer("Const: ");
+    return new Element(VALUE, &printer, t, listof<Node*>());
 }
 Node* AST::RecordNode(const IdToken* t, Node* contents){
-    return new Record(t, listof<Node*>() << contents);
+    static RecordPrinter printer;
+    return new Element(DECLARATION, &printer, t, listof<Node*>() << contents);
 }
 Node* AST::CallNode(const IdToken* t, Node* args){
-    return new Value(t, "Call: ", listof<Node*>() << args);
+    static LabelAndNamePrinter printer("Call: ");
+    return new Element(CALL, &printer, t, listof<Node*>() << args);
 }
 Node* AST::OpNode(const Token* t, Node* lhs, Node* rhs){
-    return new Value(t, "Op: ", listof<Node*>() << lhs << rhs);
+    static LabelAndNamePrinter printer("Op: ");
+    return new Element(OPERATION, &printer, t, listof<Node*>() << lhs << rhs);
 }
 Node* AST::AssignNode(const Token* t, Node* lhs, Node* rhs){
-    return new Value(t, "Assign: ", listof<Node*>() << lhs << rhs);
+    static LabelAndNamePrinter printer("Assign: ");
+    return new Element(OPERATION, &printer, t, listof<Node*>() << lhs << rhs);
 }
 Node* AST::VarDecl(const IdToken* t, Type type){
-    return new Decl(VAR, t, type, listof<Node*>());
+    static LabelAndTypePrinter printer("Var ");
+    Element* e = new Element(DECLARATION, &printer, t, listof<Node*>());
+    e->type = type;
+    return e;
 }
 Node* AST::VarDecl(const IdToken* t, Type type, Node* ivalue){
-    return new Decl(VAR, t, type, listof<Node*>() << ivalue);
+    static LabelAndTypePrinter printer("Var ");
+    Element* e = new Element(DECLARATION, &printer, t, listof<Node*>() << ivalue);
+    e->type = type;
+    return e;
 }
 Node* AST::Parameter(const IdToken* t, Type type){
-    return new Decl(PARAM, t, type, listof<Node*>());
+    static LabelAndTypePrinter printer("Param ");
+    Element* e = new Element(DECLARATION, &printer, t, listof<Node*>());
+    e->type = type;
+    return e;
 }
 Node* AST::FuncDecl(const IdToken* t, Type rtnt, Node* params, Node* compnd){
-    return new Decl(FUNC, t, rtnt, listof<Node*>() << params << compnd);
+    static FuncDeclPrinter printer("Func ");
+    Element* e = new Element(DECLARATION, &printer, t, listof<Node*>() << params << compnd);
+    e->type = rtnt;
+    return e;
 }
 Node* AST::Compound(const Token* t, Node* inits, Node* stmts){
-    return new Value(t, "Compound ", false, listof<Node*>() << inits << stmts);
+    static LabelPrinter printer("Compound");
+    return new Element(COMPOUND, &printer, t, listof<Node*>() << inits << stmts);
 }
 Node* AST::IfNode(const Token* t, Node* cond, Node* tcase, Node* fcase){
-    return new Value(t, "If ", false, listof<Node*>() << cond << tcase << fcase);
+    static LabelPrinter printer("If");
+    return new Element(CONTROL, &printer, t, listof<Node*>() << cond << tcase << fcase);
 }
 Node* AST::WhileNode(const Token* t, Node* cond, Node* stmts){
-    return new Value(t, "While ", false, listof<Node*>() << cond << stmts);
+    static LabelPrinter printer("While");
+    return new Element(CONTROL, &printer, t, listof<Node*>() << cond << stmts);
 }
 Node* AST::ReturnNode(const Token* t, Node* expr){
-    return new Value(t, "Return ", false, listof<Node*>() << expr);
+    static LabelPrinter printer("Return");
+    return new Element(CONTROL, &printer, t, listof<Node*>() << expr);
 }
 Node* AST::BreakNode(const Token* t){
-    return new Value(t, "Break ", false, listof<Node*>());
+    static LabelPrinter printer("Break");
+    return new Element(CONTROL, &printer, t, listof<Node*>());
 }
 Node* AST::Siblings(std::vector<Node*> sibs){
     // empty sibling lists should be omitted from the tree

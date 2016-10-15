@@ -6,6 +6,7 @@ const Type Type::INT("int", false, false);
 const Type Type::BOOL("bool", false, false);
 const Type Type::VOID("void", false, false);
 const Type Type::CHAR("char", false, false);
+const Type Type::NONE("undefined", false, false);
 
 ostream& operator<<(ostream& os, const Type& t){
     os << t.toString();

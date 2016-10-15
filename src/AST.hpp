@@ -53,6 +53,8 @@ namespace AST{
      */
     class Node {
     public:
+        Type type;
+
         const Token * token;
         virtual ~Node(){};
         /**
@@ -111,9 +113,10 @@ namespace AST{
         }
     protected:
         std::vector<Node*> children;
-        Node(const Token* token): token(token), children() {}
+        Node(const Token* token)
+            : type(Type::NONE), token(token), children() {}
         Node(const Token* token, const std::vector<Node*>& children)
-            : token(token), children(scrubNulls(children)) {
+            : type(Type::NONE), token(token), children(scrubNulls(children)) {
         }
         virtual bool equals(const Node& n) const {
             return token==n.token && children==n.children;
@@ -158,74 +161,29 @@ namespace AST{
         }
     };
 
-    enum DeclType { VAR, PARAM, FUNC };
-    class Decl: public Node {
-    private:
-        const DeclType dt;
-        Type type;
+    class Element;
+    class PrintStyle {
     public:
-        Decl(DeclType dt, const IdToken* tok, Type type, std::vector<Node*> ln):
-            Node(tok, ln), dt(dt), type(type) {}
-        std::string toString() const {
-            std::ostringstream oss;
-            switch(dt){
-                case VAR:   oss << "Var "; break;
-                case PARAM: oss << "Param "; break;
-                case FUNC:
-                    oss << "Func " << token->nodeLabel() << " returns type ";
-                    oss << type.rawString() << " " << token->lineBox();
-                    return oss.str();
-            }
-            oss << token->nodeLabel() << type << " " << token->lineBox();
-            return oss.str();
-        }
+        std::string toString(const Element* n);
     protected:
-        virtual bool equals(const Node& n) const {
-            if(Decl const * p = dynamic_cast<Decl const *>(&n)){
-                return dt == p->dt && type == p->type;
-            }
-            return false;
-        }
+        virtual void print(const Element* n, std::ostringstream& s) = 0;
     };
 
-    class Record: public Node {
-    private:
-    public:
-        Record(const Token* token, std::vector<Node*> children):
-            Node(token, children) {}
-        std::string toString() const {
-            std::ostringstream oss;
-            oss << "Record " << token->nodeLabel() << "  " << token->lineBox();
-            return oss.str();
-        }
-    protected:
-        virtual bool equals(const Node& n) const {
-            return dynamic_cast<Record const *>(&n) != NULL;
-        }
-    };
+    enum ElementType { VALUE, DECLARATION, CALL, OPERATION, CONTROL, COMPOUND };
 
-    class Value: public Node {
+    class Element: public Node {
     private:
-        bool pt;
-        cstr label;
+        PrintStyle* printer;
     public:
-        Value(const Token* token, cstr label, std::vector<Node*> children):
-            Node(token, children), pt(true), label(label) {}
-        Value(const Token* token, cstr label, bool pt, std::vector<Node*> children):
-            Node(token, children), pt(pt), label(label) {}
-        std::string toString() const {
-            std::ostringstream oss;
-            oss << label;
-            if(pt){
-                oss << token->nodeLabel() << " ";
-            }
-            oss << token->lineBox();
-            return oss.str();
-        }
+        const ElementType nodeType;
+        Element(ElementType nodeType, PrintStyle* printer,
+                const Token* token, std::vector<Node*> children):
+            Node(token, children), printer(printer), nodeType(nodeType) {}
+        std::string toString() const { return printer->toString(this); }
     protected:
         virtual bool equals(const Node& n) const {
-            if(Value const * p = dynamic_cast<Value const *>(&n)){
-                return label == p->label;
+            if(Element const * p = dynamic_cast<Element const *>(&n)){
+                return nodeType == p->nodeType && printer == p->printer;
             }
             return false;
         }
