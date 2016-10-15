@@ -83,20 +83,31 @@ namespace AST{
             }
         }
         /**
-         * Call <OP> on each node after <OP> has been called on all its
-         * children
+         * Call a pre and/or post method while traversing the tree from
+         * this location
          */
-        template <void (*OP)(Node*)> void postorder(){
+        class Traverser {
+        public:
+            /** Called before a node's children are traversed */
+            virtual void pre(Node *){}
+            /** Called after a node's children are traversed */
+            virtual void post(Node *){}
+        };
+        void traverse(Traverser& t){
+            t.pre(this);
             for(int i=0, size=children.size(); i<size; i++){
-                children.at(i)->postorder<OP>();
+                children.at(i)->traverse(t);
             }
-            OP(this);
+            t.post(this);
         }
         /**
          * Call to recursivly delete each tree node
          */
         void deleteTree() {
-            this->postorder<deleteNode>();
+            class Deleter : public Traverser {
+                void post(Node * n){ deleteNode(n); }
+            } deleter;
+            this->traverse(deleter);
         }
     protected:
         std::vector<Node*> children;
@@ -133,6 +144,17 @@ namespace AST{
     protected:
         virtual bool equals(const Node& n) const {
             return dynamic_cast<SiblingList const *>(&n) != NULL;
+        }
+    };
+
+    class LeafNode: public Node {
+    public:
+        LeafNode(): Node(NULL) {}
+        std::string toString() const { return ""; }
+        void formatTree(int indentlvl, std::string s, std::ostream& out) {}
+    protected:
+        virtual bool equals(const Node& n) const {
+            return dynamic_cast<LeafNode const *>(&n) != NULL;
         }
     };
 
@@ -206,17 +228,6 @@ namespace AST{
                 return label == p->label;
             }
             return false;
-        }
-    };
-
-    class LeafNode: public Node {
-    public:
-        LeafNode(): Node(NULL) {}
-        std::string toString() const { return ""; }
-        void formatTree(int indentlvl, std::string s, std::ostream& out) {}
-    protected:
-        virtual bool equals(const Node& n) const {
-            return dynamic_cast<LeafNode const *>(&n) != NULL;
         }
     };
 
