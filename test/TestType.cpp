@@ -4,13 +4,13 @@
 #include <sstream>
 
 TEST(makeArray){
-    Type t = Type::BOOL.mkArray(0);
+    Type t = Type::BOOL.asArray(0);
     CHECK_EQUAL(true, t.isArray());
     CHECK_EQUAL(false, Type::BOOL.isArray());
 }
 
 TEST(makeStatic){
-    Type t = Type::INT.mkStatic();
+    Type t = Type::INT.asStatic();
     CHECK_EQUAL(true, t.isStatic());
     CHECK_EQUAL(false, Type::BOOL.isStatic());
 }
@@ -32,18 +32,18 @@ TEST(PrintBasic){
 
 TEST(PrintStatic){
     CHECK_EQUAL(" is static of type bool",
-                Type::BOOL.mkStatic().toString()
+                Type::BOOL.asStatic().toString()
                 );
 }
 
 TEST(PrintArray){
     CHECK_EQUAL(" is array of type int",
-                Type::INT.mkArray(0).toString()
+                Type::INT.asArray(0).toString()
                 );
 }
 
 TEST(PrintStaticArray){
     CHECK_EQUAL(" is static array of type bool",
-                Type::BOOL.mkArray(0).mkStatic().toString()
+                Type::BOOL.asArray(0).asStatic().toString()
                 );
 }

@@ -15,7 +15,7 @@ TEST(PrintVarDecl){
                 );
     delete adecl;
     auto shaun = IdToken(ID,6,"shaun");
-    auto sdecl = VarDecl(&shaun, Type::INT.mkArray(0));
+    auto sdecl = VarDecl(&shaun, Type::INT.asArray(0));
     CHECK_EQUAL("Var shaun is array of type int [line: 6]",
                 sdecl->toString()
                 );
@@ -45,7 +45,7 @@ TEST(PrintParamDecl){
                 );
     delete fdecl;
     auto yarn = IdToken(ID,75,"yarn");
-    auto ydecl = Parameter(&yarn,Type::INT.mkArray(0));
+    auto ydecl = Parameter(&yarn,Type::INT.asArray(0));
     CHECK_EQUAL("Param yarn is array of type int [line: 75]",
                 ydecl->toString()
                 );

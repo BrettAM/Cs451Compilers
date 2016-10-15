@@ -9,9 +9,11 @@
 class Type{
 private:
     cstr raw;
-    bool _array, _static;
+    bool _array, _static, _func;
     Type(cstr str, bool _array, bool _static):
-        raw(str), _array(_array), _static(_static) {}
+        raw(str), _array(_array), _static(_static), _func(false) {}
+    Type(cstr str, bool _array, bool _static, bool _func):
+        raw(str), _array(_array), _static(_static), _func(_func) {}
 public:
     static const Type INT;
     static const Type BOOL;
@@ -20,16 +22,27 @@ public:
     static const Type NONE;
     static Type RECORD(/*record pointer*/){ return Type("record", false, false); }
     /** Return an array type of length `length` of this type */
-    Type mkArray(int length) const {
+    Type asArray(int length) const {
         assert(!_array); // no arrays of arrays in c-
         return Type(raw, true, _static);
     }
     /** Return an static type of this type */
-    Type mkStatic() const {
+    Type asStatic() const {
         return Type(raw, _array, true);
+    }
+    Type asFunc() const {
+        return Type(raw, false, false, true);
+    }
+    Type returnType() const {
+        if(_func){
+            return Type(raw, false, false, false);
+        } else {
+            return NONE;
+        }
     }
     bool isArray() const { return _array; }
     bool isStatic() const { return _static; }
+    bool isFunction() const { return _func; }
     const cstr rawString() const { return raw; }
     /**
      * Return a sentence predicate that qualifies a prefixed id name as this
