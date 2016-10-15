@@ -15,6 +15,7 @@ void yyerror(const char *msg){ pushError(msg); }
 %no-lines
 %define parse.error verbose
 %union {
+  const IdToken* idToken;
   const Token* token;
   AST::Node* node;
   AST::listof<AST::Node*>* builder;
@@ -23,12 +24,13 @@ void yyerror(const char *msg){ pushError(msg); }
   AST::listof<IdComp>* idCompList;
 }
 
+%token <idToken> ID RECTYPE
 %token <token>
-  ID NUMCONST CHARCONST BOOLCONST
+  BOOLCONST CHARCONST NUMCONST
   INT BOOL CHAR RECORD STATIC
   IF ELSE WHILE RETURN BREAK
   NOTEQ MULASS INC ADDASS DEC SUBASS DIVASS LESSEQ EQ GRTEQ NOT AND OR
-  MISPLACED RECTYPE
+  MISPLACED
   '(' ')' '[' ']' '{' '}' '<' '>'
   ';' '=' '+' '-' '*' '/' '%' '?' '.' ',' ':'
 

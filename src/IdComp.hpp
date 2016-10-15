@@ -6,7 +6,7 @@
  * declaration list up to where the type specifier is available
  */
 struct IdComp {
-    const Token* id;
+    const IdToken* id;
     int arraylen;
     AST::Node* init;
 };
