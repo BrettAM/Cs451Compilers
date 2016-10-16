@@ -72,6 +72,8 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
                     Node* def = table.lookup(e->token->text);
                     if(def == NULL){
                         errors.push_back(Errors::notDefined(e->token));
+                    } else if(def->type.isFunction()) {
+                        errors.push_back(Errors::functionUsedAsVar(e->token));
                     } else {
                         resultType = def->type;
                     }
@@ -131,18 +133,62 @@ ChkResult Semantics::checkCall(AST::Node* call, AST::Node* f){
 
     return ChkResult(function->type.returnType());
 }
-ChkResult Semantics::checkOperands(AST::Node* op){
+ChkResult Semantics::checkOperands(AST::Node* opNode){
+    Element* e = dynamic_cast<Element *>(opNode);
+    Element* lhNode = dynamic_cast<Element *>(e->getChild(0));
+    Element* rhNode = dynamic_cast<Element *>(e->getChild(1));
+    Type lhs = (lhNode != NULL)? lhNode->type.runtime() : Type::NONE;
+    Type rhs = (rhNode != NULL)? rhNode->type.runtime() : Type::NONE;
+    int op = opNode->token->token;
+/*
+    cout << "Operation " << opNode->token->text << " Called on "
+         << lhs << " and " << rhs << endl;
+*/
+    // we don't emit multiple errors, so if lhs is wrong just ignore this op
+    //if(lhs == Type::NONE) return ChkResult(Type::NONE);
+    // also if its not unary and the other side is none, don't issue errors
+    // but do return the correct type for further checking
+
+/*
+    '[' -> indexing
+    NOTEQ, LESSEQ, EQ, GRTEQ, '<', '>' -> comparison
+    MULASS, ADDASS, SUBASS, DIVASS, '=' -> assignment
+    '+', '-', '*', '/', '%' -> intops
+    INC, DEC, NOT, '*', '?' -> unary
+    AND, OR -> boolean
+    RETURN
+*/
+
     //"ERROR(%d): Cannot index nonarray '%s'.\n"
     //"ERROR(%d): Cannot index nonarray.\n"
+    //"ERROR(%d): Array index is the unindexed array '%s'.\n"
+    //"ERROR(%d): Array '%s' should be indexed by type int but got %s.\n"
+    if(op == '[') {
+        if(!lhs.isArray()) {
+            return ChkResult((lhNode->nodeType == VALUE)
+                ? Errors::cannotIndexNonarray(lhNode->token)
+                : Errors::cannotIndexNonarray(lhNode->token->line)
+                );
+        }
+
+        if(rhs.isArray()){
+            return ChkResult(Errors::arrayIndexedByArray(rhNode->token));
+        }
+
+        if(rhs != Type::INT){
+            return ChkResult(Errors::badArrayIndex(lhNode->token, rhs));
+        }
+
+        return ChkResult(lhs.returnType());
+    }
+
+    //"ERROR(%d): The operation '%s' does not work with arrays.\n"
+    //"ERROR(%d): The operation '%s' only works with arrays.\n"
+    //"ERROR(%d): Unary '%s' requires an operand of type %s but was given %s.\n"
     //"ERROR(%d): '%s' requires operands of %s but lhs is of %s.\n"
     //"ERROR(%d): '%s' requires operands of %s but rhs is of %s.\n"
     //"ERROR(%d): '%s' requires operands of the same type but lhs is %s and rhs is %s.\n"
-    //"ERROR(%d): The operation '%s' does not work with arrays.\n"
-    //"ERROR(%d): Cannot use function '%s' as a variable.\n"
-    //"ERROR(%d): The operation '%s' only works with arrays.\n"
-    //"ERROR(%d): Unary '%s' requires an operand of type %s but was given %s.\n"
-    //"ERROR(%d): Array index is the unindexed array '%s'.\n"
-    //"ERROR(%d): Array '%s' should be indexed by type int but got %s.\n"
     //"ERROR(%d): Cannot return an array.\n"
+
     return ChkResult(Type::NONE);
 }

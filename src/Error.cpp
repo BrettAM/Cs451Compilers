@@ -67,7 +67,7 @@ Error* Errors::cannotReturnArray(const Token* t){
 }
 Error* Errors::functionUsedAsVar(const Token* t){
     rtnErr(t->line,
-        "Cannot use function \'"<<t->text<<"\'  as a variable."
+        "Cannot use function \'"<<t->text<<"\' as a variable."
     );
 }
 Error* Errors::alreadyDefined(const Token* t, int line){

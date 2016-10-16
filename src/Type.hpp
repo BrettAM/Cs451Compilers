@@ -34,7 +34,7 @@ public:
         return Type(raw, false, false, true);
     }
     Type returnType() const {
-        if(_func){
+        if(_func || _array){
             return Type(raw, false, false, false);
         } else {
             return NONE;
