@@ -15,7 +15,8 @@ private:
     std::map<std::string,AST::Node*> values;
 public:
     SymTab* parent;
-    SymTab(SymTab* parent): parent(parent) {}
+    AST::Node* block;
+    SymTab(SymTab* parent, AST::Node* block): parent(parent), block(block) {}
     AST::Node* lookup(std::string name){
         AST::Node* val = values[name];
         if(val != NULL){
@@ -34,6 +35,9 @@ public:
         }
         return false;
     }
+    AST::Node* getBlock() {
+        return block;
+    }
 };
 
 class SymbolTable{
@@ -41,7 +45,7 @@ private:
     SymTab* table;
 public:
     SymbolTable(){
-        table = new SymTab(NULL);
+        table = new SymTab(NULL, NULL);
     }
     ~SymbolTable(){
         while(table->parent != NULL){
@@ -52,8 +56,8 @@ public:
     /**
      * Enter a new scope
      */
-    void enter(){
-        table = new SymTab(table);
+    void enter(AST::Node* block){
+        table = new SymTab(table,block);
     }
     /**
      * Exit the current scope
@@ -80,6 +84,13 @@ public:
      */
     bool add(std::string name, AST::Node* value){
         return table->add(name, value);
+    }
+    /**
+     * Returns the Node* corresponding to the current scopes tree block
+     * will return NULL if the symbol table is in the global scope
+     */
+    AST::Node* getBlock(){
+        return table->block;
     }
 };
 

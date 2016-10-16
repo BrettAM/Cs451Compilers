@@ -9,6 +9,7 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
     public:
         vector<Error*> errors;
         SymbolTable table;
+        bool lastEnteredFunction;
         void pre(Node * n){
             Element* e = dynamic_cast<Element *>(n);
             if(e == NULL) return; // not an element node
@@ -21,9 +22,17 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
 
             switch(e->nodeType){
                 case COMPOUND: {
-                    table.enter();
+                    if(lastEnteredFunction){
+                        lastEnteredFunction = false;
+                        break;
+                    } else {
+                        table.enter(n);
+                    }
                 } break;
-                case FUNCTIONDECL:
+                case FUNCTIONDECL: {
+                    lastEnteredFunction = true;
+                    table.enter(n);
+                }
                 case DECLARATION:{
                     bool success = table.add(e->token->text, e);
                     if(!success) {
@@ -36,6 +45,12 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
             }
         }
         void post(Node * n){
+            if(table.getBlock() == n){
+                // if we entered a block here, leave it
+                lastEnteredFunction = false;
+                table.exit();
+            }
+
             Element* e = dynamic_cast<Element *>(n);
             if(e == NULL) return; // not an element node
 
@@ -48,9 +63,6 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
             //calls get checked
             //type the node
             switch(e->nodeType){
-                case COMPOUND: {
-                    table.exit();
-                } break;
                 case VALUE:{
                     if(e->type == Type::NONE){
                         Node* def = table.lookup(e->token->text);

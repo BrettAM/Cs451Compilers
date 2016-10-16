@@ -33,7 +33,7 @@ TEST(shadowing){
     SymbolTable t;
     t.add("one",one);
     t.add("two",two);
-    t.enter();
+    t.enter(NULL);
     CHECK(t.lookup("one") == one);
     CHECK(t.add("one",two) == true);
     CHECK(t.lookup("one") == two);
@@ -43,8 +43,21 @@ TEST(shadowing){
 TEST(leaveScope){
     SymbolTable t;
     t.add("one",one);
-    t.enter();
+    t.enter(NULL);
     t.add("one",two);
     t.exit();
     CHECK(t.lookup("one")==one);
+}
+
+TEST(blockPointer){
+    SymbolTable t;
+    CHECK(t.getBlock() == NULL);
+    t.enter(one);
+    CHECK(t.getBlock() == one);
+    t.enter(two);
+    CHECK(t.getBlock() == two);
+    t.exit();
+    CHECK(t.getBlock() == one);
+    t.exit();
+    CHECK(t.getBlock() == NULL);
 }
