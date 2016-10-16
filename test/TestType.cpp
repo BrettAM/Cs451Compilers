@@ -17,33 +17,33 @@ TEST(makeStatic){
 
 TEST(PrintBasic){
     CHECK_EQUAL(" of type bool",
-                Type::BOOL.toString()
+                Type::BOOL.predicate()
                 );
     CHECK_EQUAL(" of type int",
-                Type::INT.toString()
+                Type::INT.predicate()
                 );
     CHECK_EQUAL(" of type void",
-                Type::VOID.toString()
+                Type::VOID.predicate()
                 );
     CHECK_EQUAL(" of type record",
-                Type::RECORD().toString()
+                Type::RECORD().predicate()
                 );
 }
 
 TEST(PrintStatic){
     CHECK_EQUAL(" is static of type bool",
-                Type::BOOL.asStatic().toString()
+                Type::BOOL.asStatic().predicate()
                 );
 }
 
 TEST(PrintArray){
     CHECK_EQUAL(" is array of type int",
-                Type::INT.asArray(0).toString()
+                Type::INT.asArray(0).predicate()
                 );
 }
 
 TEST(PrintStaticArray){
     CHECK_EQUAL(" is static array of type bool",
-                Type::BOOL.asArray(0).asStatic().toString()
+                Type::BOOL.asArray(0).asStatic().predicate()
                 );
 }

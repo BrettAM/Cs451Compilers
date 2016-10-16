@@ -40,6 +40,14 @@ public:
             return NONE;
         }
     }
+    /**
+     * Get a version of this type representing its runtime meaning
+     * For now, this just cleares the static field because a static int
+     * is assignable to an int field etc.
+     */
+    Type runtime() const {
+        return Type(raw, _array, false, _func);
+    }
     bool isArray() const { return _array; }
     bool isStatic() const { return _static; }
     bool isFunction() const { return _func; }
@@ -48,7 +56,7 @@ public:
      * Return a sentence predicate that qualifies a prefixed id name as this
      * type
      */
-    std::string toString() const {
+    std::string predicate() const {
         std::ostringstream oss;
         if(_array || _static){
             oss << " is";
@@ -56,6 +64,20 @@ public:
             if(_array) oss << " array";
         }
         oss << " of type " << raw;
+        return oss.str();
+    }
+    std::string toString() const {
+        std::ostringstream oss;
+        if(_func){
+            oss << "Function returning ";
+        }
+        if(_static){
+            oss << "static ";
+        }
+        oss << raw;
+        if(_array){
+            oss << " array";
+        }
         return oss.str();
     }
     std::string typeBox() const {

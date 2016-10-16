@@ -113,6 +113,14 @@ namespace AST{
             } deleter;
             this->traverse(deleter);
         }
+        /**
+         * Return the pointer to this node's i'th child, or NULL if it doesn't
+         *   exist.
+         */
+        Node* getChild(size_t i){
+            if(i < 0 || i >= children.size()) return NULL;
+            return children[i];
+        }
     protected:
         std::vector<Node*> children;
         Node(const Token* token)
