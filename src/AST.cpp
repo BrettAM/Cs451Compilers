@@ -3,12 +3,12 @@
 using namespace std;
 using namespace AST;
 
-std::ostream& operator<<(std::ostream& os, const Node& n){
+std::ostream& AST::operator<<(std::ostream& os, const Node& n){
     os << n.toString();
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const Node* n){
+std::ostream& AST::operator<<(std::ostream& os, const Node* n){
     os << n->toString();
     return os;
 }

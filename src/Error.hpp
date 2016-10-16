@@ -37,7 +37,7 @@ namespace Errors{
     Error* cannotIndexNonarray(int lineno);
     Error* cannotReturnArray(const Token* t);
     Error* functionUsedAsVar(const Token* func);
-    Error* alreadyDefined(const Token* t, int previousLine);
+    Error* alreadyDefined(std::string name, int previousLine);
     Error* notDefined(const Token* t);
     Error* opDoesntAcceptArrays(const Token* op);
     Error* opOnlyAcceptsArrays(const Token* op);

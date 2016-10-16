@@ -42,7 +42,7 @@ Error* Errors::cannotReturnArray(const Token* t){
 Error* Errors::functionUsedAsVar(const Token* func){
     return new Error(0,"ERROR(%d): Cannot use function '%s' as a variable.\n");
 }
-Error* Errors::alreadyDefined(const Token* t, int previousLine){
+Error* Errors::alreadyDefined(std::string name, int previousLine){
     return new Error(0,"ERROR(%d): Symbol '%s' is already defined at line %d.\n");
 }
 Error* Errors::notDefined(const Token* t){
