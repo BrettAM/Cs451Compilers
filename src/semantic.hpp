@@ -23,8 +23,7 @@ namespace Semantics{
     /**
      * Check if an invocation of a given operator is valid on the given nodes
      */
-    ChkResult checkOperands(AST::Node* op, AST::Node* lhs, AST::Node* rhs);
-    ChkResult checkOperands(AST::Node* op, AST::Node* rhs);
+    ChkResult checkOperands(AST::Node* op);
     /**
      * Analyse an AST and return a list of detected errors
      * This will result in the `type` field at each node being filled in where

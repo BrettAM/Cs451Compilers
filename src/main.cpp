@@ -38,6 +38,7 @@ int main(int argc, char *argv[]) {
     ParseDriver::Result r = ParseDriver::run(input);
     vector<Error*> errors = Semantics::analyze(r.getAST());
 
+    if(r.getErrorFlag()) cout << r.getError() << endl;
     for(size_t i=0; i<errors.size(); i++){
         cout << errors[i] << endl;
         delete errors[i];

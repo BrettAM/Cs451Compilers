@@ -9,35 +9,42 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
     public:
         vector<Error*> errors;
         SymbolTable table;
-        bool lastEnteredFunction;
+        bool prevEnterWasFunc;
         void pre(Node * n){
             Element* e = dynamic_cast<Element *>(n);
             if(e == NULL) return; // not an element node
 
-            //enter scopes on compound, function
-            //register declarations, checking for dups
-
-            //always enter on function
-            //enter on compound if parent isn't a function
-
             switch(e->nodeType){
+                /**
+                 * Enter a new scope unless immediatly following a function call
+                 */
                 case COMPOUND: {
-                    if(lastEnteredFunction){
-                        lastEnteredFunction = false;
+                    if(prevEnterWasFunc){
+                        prevEnterWasFunc = false;
                         break;
                     } else {
                         table.enter(n);
                     }
                 } break;
-                case FUNCTIONDECL: {
-                    lastEnteredFunction = true;
-                    table.enter(n);
-                }
-                case DECLARATION:{
-                    bool success = table.add(e->token->text, e);
+                /**
+                 * Enter declarations into the symbol table, logging errors for
+                 *   duplicate declarations as we go.
+                 * If its a function declaration, Make a new scope and flag that
+                 *   a compound immediatly following should not enter a new
+                 *   scope.
+                 */
+                case DECLARATION:
+                case FUNCTIONDECL:{
+                    string id = e->token->text;
+                    bool success = table.add(id, e);
                     if(!success) {
-                        int line = table.lookup(e->token->text)->token->line;
+                        int line = table.lookup(id)->token->line;
                         errors.push_back(Errors::alreadyDefined(e->token,line));
+                    }
+
+                    if(e->nodeType == FUNCTIONDECL){
+                        prevEnterWasFunc = true;
+                        table.enter(n);
                     }
                 } break;
                 default:
@@ -45,36 +52,65 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
             }
         }
         void post(Node * n){
-            if(table.getBlock() == n){
-                // if we entered a block here, leave it
-                lastEnteredFunction = false;
-                table.exit();
-            }
-
             Element* e = dynamic_cast<Element *>(n);
             if(e == NULL) return; // not an element node
 
-            //always exit on function
-            //exit on compound if parent isn't a function
+            // if we entered a block here, leave it
+            if(table.getBlock() == n){
+                prevEnterWasFunc = false;
+                table.exit();
+            }
 
-            //exit scopes on compound, function
-            //variables get checked for definitions
-            //functions get checked for operands
-            //calls get checked
-            //type the node
+            Type resultType = Type::NONE;
             switch(e->nodeType){
+                /**
+                 * Check the symbol table for a value's current type.
+                 * Constants are already tagged with a type so ignore them.
+                 */
                 case VALUE:{
-                    if(e->type == Type::NONE){
-                        Node* def = table.lookup(e->token->text);
-                        if(def == NULL){
-                            errors.push_back(Errors::notDefined(e->token));
-                        } else {
-                            e->type = def->type;
-                        }
+                    if(e->type != Type::NONE) break;
+                    Node* def = table.lookup(e->token->text);
+                    if(def == NULL){
+                        errors.push_back(Errors::notDefined(e->token));
+                    } else {
+                        resultType = def->type;
                     }
+                } break;
+                /**
+                 * Check that a function is defined and that the call is valid,
+                 *   find the call's return type.
+                 */
+                case CALL:{
+                    Node* func = table.lookup(e->token->text);
+                    if(func == NULL){
+                        errors.push_back(Errors::notDefined(e->token));
+                        break;
+                    }
+
+                    ChkResult res = checkCall(e, func);
+                    if(!res.passed){
+                        errors.push_back(res.error);
+                        break;
+                    }
+                    resultType = res.result;
+                } break;
+                /**
+                 * Check that an operation is performed on subtrees of valid
+                 *   types and find its resulting type.
+                 */
+                case OPERATION:{
+                    ChkResult res = checkOperands(e);
+                    if(!res.passed){
+                        errors.push_back(res.error);
+                        break;
+                    }
+                    resultType = res.result;
                 } break;
                 default:
                 break;
+            }
+            if(resultType != Type::NONE){
+                e->type = resultType;
             }
         }
     } analyzer;
@@ -86,12 +122,27 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
 
     return analyzer.errors;
 }
-ChkResult Semantics::checkCall(AST::Node* call, AST::Node* function){
-    return ChkResult(Type::NONE);
+ChkResult Semantics::checkCall(AST::Node* call, AST::Node* f){
+    Element* function = dynamic_cast<Element *>(f);
+
+    if(function->nodeType != FUNCTIONDECL){
+        return ChkResult(Errors::cannotBeCalled(f->token));
+    }
+
+    return ChkResult(function->type.returnType());
 }
-ChkResult Semantics::checkOperands(AST::Node* op, AST::Node* lhs, AST::Node* rhs){
-    return ChkResult(Type::NONE);
-}
-ChkResult Semantics::checkOperands(AST::Node* op, AST::Node* rhs){
+ChkResult Semantics::checkOperands(AST::Node* op){
+    //"ERROR(%d): Cannot index nonarray '%s'.\n"
+    //"ERROR(%d): Cannot index nonarray.\n"
+    //"ERROR(%d): '%s' requires operands of %s but lhs is of %s.\n"
+    //"ERROR(%d): '%s' requires operands of %s but rhs is of %s.\n"
+    //"ERROR(%d): '%s' requires operands of the same type but lhs is %s and rhs is %s.\n"
+    //"ERROR(%d): The operation '%s' does not work with arrays.\n"
+    //"ERROR(%d): Cannot use function '%s' as a variable.\n"
+    //"ERROR(%d): The operation '%s' only works with arrays.\n"
+    //"ERROR(%d): Unary '%s' requires an operand of type %s but was given %s.\n"
+    //"ERROR(%d): Array index is the unindexed array '%s'.\n"
+    //"ERROR(%d): Array '%s' should be indexed by type int but got %s.\n"
+    //"ERROR(%d): Cannot return an array.\n"
     return ChkResult(Type::NONE);
 }

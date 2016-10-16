@@ -77,6 +77,9 @@ public:
                _array == n._array &&
                _static == n._static;
     }
+    bool operator!=(const Type& n) const {
+        return !(*this == n);
+    }
 };
 std::ostream& operator<<(std::ostream&, const Type&);
 std::ostream& operator<<(std::ostream&, const Type*);

@@ -12,18 +12,20 @@
 
 class Error{
 private:
-    int lineno;
+    int32_t lineno;
     std::string description;
 public:
-    Error(int line, std::string description)
+    static const int32_t SYNTAX = -1;
+    static const int32_t LINKER = INT32_MAX;
+    Error(int32_t line, std::string description)
         : lineno(line), description(description){}
     std::string toString() const {
         std::ostringstream oss;
         oss << "ERROR(";
-        if(lineno >= 0){
-            oss << lineno;
-        } else {
-            oss << "LINKER";
+        switch(lineno){
+            case LINKER: oss << "LINKER"; break;
+            case SYNTAX: oss << "SYNTAX"; break;
+            default:     oss << lineno; break;
         }
         oss << "): " << description;
         return oss.str();

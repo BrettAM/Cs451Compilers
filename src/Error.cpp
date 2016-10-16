@@ -97,6 +97,5 @@ Error* Errors::unaryTypeMismatch(const Token* op, Type found, Type required){
     );
 }
 Error* Errors::missingMainFunction(){
-    return new Error(-1,"Procedure main is not defined.");
+    return new Error(Error::LINKER,"Procedure main is not defined.");
 }
-
