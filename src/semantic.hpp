@@ -29,7 +29,7 @@ namespace Semantics{
      * This will result in the `type` field at each node being filled in where
      *    possible
      */
-    std::vector<Error*> analyse(AST::Node* root);
+    std::vector<Error*> analyze(AST::Node* root);
 }
 
 #endif

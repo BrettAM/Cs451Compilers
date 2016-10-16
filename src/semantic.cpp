@@ -13,6 +13,6 @@ ChkResult Semantics::checkOperands(AST::Node* op, AST::Node* lhs, AST::Node* rhs
 ChkResult Semantics::checkOperands(AST::Node* op, AST::Node* rhs){
     return ChkResult(Type::NONE);
 }
-std::vector<Error*> Semantics::analyse(AST::Node* root){
+std::vector<Error*> Semantics::analyze(AST::Node* root){
     return std::vector<Error*>();
 }
