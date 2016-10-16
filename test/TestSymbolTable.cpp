@@ -19,16 +19,14 @@ TEST(equality){
 TEST(addAndAccess){
     SymbolTable t;
     CHECK(t.lookup("one") == NULL);
-    CHECK(t.add("one",one) == NULL);
+    CHECK(t.add("one",one) == true);
     CHECK(one == t.lookup("one"));
 }
 
 TEST(addDuplicate){
     SymbolTable t;
     t.add("one",one);
-    Error* e = t.add("one",one);
-    CHECK(e != NULL);
-    delete e;
+    CHECK(t.add("one",one) == false);
 }
 
 TEST(shadowing){
@@ -37,7 +35,7 @@ TEST(shadowing){
     t.add("two",two);
     t.enter();
     CHECK(t.lookup("one") == one);
-    CHECK(t.add("one",two) == NULL);
+    CHECK(t.add("one",two) == true);
     CHECK(t.lookup("one") == two);
     CHECK(t.lookup("two") == two);
 }

@@ -12,50 +12,89 @@ ostream& operator<<(ostream& os, const Error* e){
     return os;
 }
 
+#define rtnErr(line, transform) \
+    do { \
+        std::ostringstream tmp; \
+        tmp << transform; \
+        return new Error(line, tmp.str()); \
+    } while (false)
+
 Error* Errors::cannotBeCalled(const Token* t){
-    return new Error(0,"ERROR(%d): '%s' is a simple variable and cannot be called.");
+    rtnErr(t->line,
+        "\'"<<t->text<<"\' is a simple variable and cannot be called."
+    );
 }
 Error* Errors::incorrectLHS(const Token* t, Type found, Type required){
-    return new Error(0,"ERROR(%d): '%s' requires operands of %s but lhs is of %s.");
+    return new Error(0,"'%s' requires operands of %s but lhs is of %s.");
+    rtnErr(t->line,
+        "\'"<<t->text<<"\' requires operands of "<<required
+            <<" but lhs is of " << found << "."
+    );
 }
 Error* Errors::incorrectRHS(const Token* t, Type found, Type required){
-    return new Error(0,"ERROR(%d): '%s' requires operands of %s but rhs is of %s.");
+    rtnErr(t->line,
+        "\'"<<t->text<<"\' requires operands of "<<required
+            <<" but rhs is of " << found << "."
+    );
 }
 Error* Errors::mismatchedLR(const Token* t, Type lhs, Type rhs){
-    return new Error(0,"ERROR(%d): '%s' requires operands of the same type but lhs is %s and rhs is %s.");
+    rtnErr(t->line,
+        "\'"<<t->text<<"\' requires operands of the same type but lhs is "
+            <<lhs<<" and rhs is "<<rhs<<"."
+    );
 }
 Error* Errors::badArrayIndex(const Token* t, Type received){
-    return new Error(0,"ERROR(%d): Array '%s' should be indexed by type int but got %s.");
+    rtnErr(t->line,
+        "Array \'"<<t->text<<"\' should be indexed by type int but got "
+            <<received<<"."
+    );
 }
 Error* Errors::arrayIndexedByArray(const Token* t){
-    return new Error(0,"ERROR(%d): Array index is the unindexed array '%s'.");
+    rtnErr(t->line,
+        "Array index is the unindexed array \'"<<t->text<<"\'."
+    );
 }
 Error* Errors::cannotIndexNonarray(const Token* t){
-    return new Error(0,"ERROR(%d): Cannot index nonarray '%s'.");
+    rtnErr(t->line,
+        "Cannot index nonarray \'"<<t->text<<"\'."
+    );
 }
 Error* Errors::cannotIndexNonarray(int lineno){
-    return new Error(0,"ERROR(%d): Cannot index nonarray.");
+    rtnErr(lineno, "Cannot index nonarray.");
 }
 Error* Errors::cannotReturnArray(const Token* t){
-    return new Error(0,"ERROR(%d): Cannot return an array.");
+    rtnErr(t->line, "Cannot return an array.");
 }
-Error* Errors::functionUsedAsVar(const Token* func){
-    return new Error(0,"ERROR(%d): Cannot use function '%s' as a variable.");
+Error* Errors::functionUsedAsVar(const Token* t){
+    rtnErr(t->line,
+        "Cannot use function \'"<<t->text<<"\'  as a variable."
+    );
 }
-Error* Errors::alreadyDefined(std::string name, int previousLine){
-    return new Error(0,"ERROR(%d): Symbol '%s' is already defined at line %d.");
+Error* Errors::alreadyDefined(const Token* t, int line){
+    rtnErr(t->line,
+        "Symbol \'"<<t->text<<"\' is already defined at line "<<line<<"."
+    );
 }
 Error* Errors::notDefined(const Token* t){
-    return new Error(0,"ERROR(%d): Symbol '%s' is not defined.");
+    rtnErr(t->line,
+        "Symbol \'"<<t->text<<"\' is not defined."
+    );
 }
 Error* Errors::opDoesntAcceptArrays(const Token* op){
-    return new Error(0,"ERROR(%d): The operation '%s' does not work with arrays.");
+    rtnErr(op->line,
+        "The operation  \'"<<op->text<<"\' does not work with arrays."
+    );
 }
 Error* Errors::opOnlyAcceptsArrays(const Token* op){
-    return new Error(0,"ERROR(%d): The operation '%s' only works with arrays.");
+    rtnErr(op->line,
+        "The operation  \'"<<op->text<<"\' only works with arrays."
+    );
 }
 Error* Errors::unaryTypeMismatch(const Token* op, Type found, Type required){
-    return new Error(0,"ERROR(%d): Unary '%s' requires an operand of type %s but was given %s.");
+    rtnErr(op->line,
+        "Unary  \'"<<op->text<<"\' requires an operand of type "<<required
+            << " but was given " << found;
+    );
 }
 Error* Errors::missingMainFunction(){
     return new Error(-1,"Procedure main is not defined.");

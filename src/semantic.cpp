@@ -4,15 +4,6 @@ using namespace std;
 using namespace AST;
 using namespace Semantics;
 
-ChkResult Semantics::checkCall(AST::Node* call, AST::Node* function){
-    return ChkResult(Type::NONE);
-}
-ChkResult Semantics::checkOperands(AST::Node* op, AST::Node* lhs, AST::Node* rhs){
-    return ChkResult(Type::NONE);
-}
-ChkResult Semantics::checkOperands(AST::Node* op, AST::Node* rhs){
-    return ChkResult(Type::NONE);
-}
 std::vector<Error*> Semantics::analyze(AST::Node* root){
     class Analyzer : public Node::Traverser {
     public:
@@ -24,14 +15,21 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
 
             //enter scopes on compound, function
             //register declarations, checking for dups
+
+            //always enter on function
+            //enter on compound if parent isn't a function
+
             switch(e->nodeType){
                 case COMPOUND: {
                     table.enter();
                 } break;
                 case FUNCTIONDECL:
                 case DECLARATION:{
-                    Error* error = table.add(e->token->text, e);
-                    if(error != NULL) errors.push_back(error);
+                    bool success = table.add(e->token->text, e);
+                    if(!success) {
+                        int line = table.lookup(e->token->text)->token->line;
+                        errors.push_back(Errors::alreadyDefined(e->token,line));
+                    }
                 } break;
                 default:
                     break;
@@ -40,6 +38,9 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
         void post(Node * n){
             Element* e = dynamic_cast<Element *>(n);
             if(e == NULL) return; // not an element node
+
+            //always exit on function
+            //exit on compound if parent isn't a function
 
             //exit scopes on compound, function
             //variables get checked for definitions
@@ -72,4 +73,13 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
     }
 
     return analyzer.errors;
+}
+ChkResult Semantics::checkCall(AST::Node* call, AST::Node* function){
+    return ChkResult(Type::NONE);
+}
+ChkResult Semantics::checkOperands(AST::Node* op, AST::Node* lhs, AST::Node* rhs){
+    return ChkResult(Type::NONE);
+}
+ChkResult Semantics::checkOperands(AST::Node* op, AST::Node* rhs){
+    return ChkResult(Type::NONE);
 }

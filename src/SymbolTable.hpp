@@ -9,7 +9,6 @@
 
 #include "Token.hpp"
 #include "AST.hpp"
-#include "Error.hpp"
 
 class SymTab{
 private:
@@ -27,15 +26,13 @@ public:
             return NULL;
         }
     }
-    Error* add(std::string name, AST::Node* value){
+    bool add(std::string name, AST::Node* value){
         AST::Node* existing = values[name];
         if(existing == NULL){
             values[name] = value;
-            return NULL;
-        } else {
-            int lineno = (existing->token != NULL)? existing->token->line : -1;
-            return Errors::alreadyDefined(name, lineno);
+            return true;
         }
+        return false;
     }
 };
 
@@ -77,10 +74,11 @@ public:
         return table->lookup(name);
     }
     /**
-     * Adds a (name,value) pair to this scope, returning an error
-     * if it is already defined
+     * Adds a (name,value) pair to this scope
+     * return true if the operation succeeds, false if `name` is already
+     * associated
      */
-    Error* add(std::string name, AST::Node* value){
+    bool add(std::string name, AST::Node* value){
         return table->add(name, value);
     }
 };
