@@ -6,6 +6,7 @@
 #include "Error.hpp"
 #include "AST.hpp"
 #include "SymbolTable.hpp"
+#include "ParseDefines.hpp"
 
 namespace Semantics{
     typedef struct ChkResult {

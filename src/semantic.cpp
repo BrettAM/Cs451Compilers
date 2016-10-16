@@ -182,13 +182,21 @@ ChkResult Semantics::checkOperands(AST::Node* opNode){
         return ChkResult(lhs.returnType());
     }
 
+    //"ERROR(%d): Cannot return an array.\n"
+    if(op == RETURN){
+        if(lhs.isArray()){
+            return ChkResult(Errors::cannotReturnArray(lhNode->token));
+        }
+
+        return ChkResult(Type::VOID);
+    }
+
     //"ERROR(%d): The operation '%s' does not work with arrays.\n"
     //"ERROR(%d): The operation '%s' only works with arrays.\n"
     //"ERROR(%d): Unary '%s' requires an operand of type %s but was given %s.\n"
     //"ERROR(%d): '%s' requires operands of %s but lhs is of %s.\n"
     //"ERROR(%d): '%s' requires operands of %s but rhs is of %s.\n"
     //"ERROR(%d): '%s' requires operands of the same type but lhs is %s and rhs is %s.\n"
-    //"ERROR(%d): Cannot return an array.\n"
 
     return ChkResult(Type::NONE);
 }
