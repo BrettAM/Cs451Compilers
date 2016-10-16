@@ -168,7 +168,7 @@ returnTypeSpecifier : INT  { $$ = new Type(Type::INT); }
                     | CHAR { $$ = new Type(Type::CHAR); }
                     ;
 
-funDeclaration : typeSpecifier ID '(' params ')' statement { $$ = FuncDecl($2, *$1.asFunc(), $4, $6); delete $1; }
+funDeclaration : typeSpecifier ID '(' params ')' statement { $$ = FuncDecl($2, (*$1).asFunc(), $4, $6); delete $1; }
                | ID '(' params ')' statement               { $$ = FuncDecl($1, Type::VOID.asFunc(), $3, $5); }
                ;
 
