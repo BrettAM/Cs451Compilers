@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string>
 #include "TextUtils.hpp"
+#include "Type.hpp"
 
 class Token {
 public:
@@ -40,7 +41,12 @@ public:
         oss << "[line: " << line << "]";
         return oss.str();
     }
-
+    /**
+     * Get the type associated with this token literal if applicable
+     */
+    virtual Type getType() const {
+        return Type::NONE;
+    }
     bool operator==(const Token& r) const {
         return this->equals(r);
     }
@@ -67,6 +73,9 @@ public:
         char conv[4] = {'\'', literal, '\'', '\0'};
         return std::string(conv);
     }
+    Type getType() const {
+        return Type::CHAR;
+    }
 protected:
     bool equals(const Token& r) const {
         if(CharConst const * p = dynamic_cast<CharConst const *>(&r)){
@@ -86,6 +95,9 @@ public:
         oss << "Line " << line << " Token: NUMCONST Value: " << value
             << "  Input: " << text;
         return oss.str();
+    }
+    Type getType() const {
+        return Type::INT;
     }
 protected:
     bool equals(const Token& r) const {
@@ -108,6 +120,9 @@ public:
         oss << "Line " << line << " Token: BOOLCONST Value: " << value
             << "  Input: " << text;
         return oss.str();
+    }
+    Type getType() const {
+        return Type::BOOL;
     }
 protected:
     bool equals(const Token& r) const {

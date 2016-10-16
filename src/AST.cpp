@@ -112,7 +112,9 @@ Node* AST::IdNode(const IdToken* t){
 }
 Node* AST::ConstNode(const Token* t){
     static LabelAndNamePrinter printer("Const: ");
-    return new Element(VALUE, &printer, t, listof<Node*>());
+    Node* e = new Element(VALUE, &printer, t, listof<Node*>());
+    e->type = t->getType();
+    return e;
 }
 Node* AST::RecordNode(const IdToken* t, Node* contents){
     static RecordPrinter printer;
