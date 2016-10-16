@@ -152,7 +152,7 @@ Node* AST::Parameter(const IdToken* t, Type type){
 }
 Node* AST::FuncDecl(const IdToken* t, Type rtnt, Node* params, Node* compnd){
     static FuncDeclPrinter printer("Func ");
-    Element* e = new Element(DECLARATION, &printer, t, listof<Node*>() << params << compnd);
+    Element* e = new Element(FUNCTIONDECL, &printer, t, listof<Node*>() << params << compnd);
     e->type = rtnt;
     return e;
 }

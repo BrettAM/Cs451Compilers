@@ -14,5 +14,62 @@ ChkResult Semantics::checkOperands(AST::Node* op, AST::Node* rhs){
     return ChkResult(Type::NONE);
 }
 std::vector<Error*> Semantics::analyze(AST::Node* root){
-    return std::vector<Error*>();
+    class Analyzer : public Node::Traverser {
+    public:
+        vector<Error*> errors;
+        SymbolTable table;
+        void pre(Node * n){
+            Element* e = dynamic_cast<Element *>(n);
+            if(e == NULL) return; // not an element node
+
+            //enter scopes on compound, function
+            //register declarations, checking for dups
+            switch(e->nodeType){
+                case COMPOUND: {
+                    table.enter();
+                } break;
+                case FUNCTIONDECL:
+                case DECLARATION:{
+                    Error* error = table.add(e->token->text, e);
+                    if(error != NULL) errors.push_back(error);
+                } break;
+                default:
+                    break;
+            }
+        }
+        void post(Node * n){
+            Element* e = dynamic_cast<Element *>(n);
+            if(e == NULL) return; // not an element node
+
+            //exit scopes on compound, function
+            //variables get checked for definitions
+            //functions get checked for operands
+            //calls get checked
+            //type the node
+            switch(e->nodeType){
+                case COMPOUND: {
+                    table.exit();
+                } break;
+                case VALUE:{
+                    if(e->type == Type::NONE){
+                        Node* def = table.lookup(e->token->text);
+                        if(def == NULL){
+                            errors.push_back(Errors::notDefined(e->token));
+                        } else {
+                            e->type = def->type;
+                        }
+                    }
+                } break;
+                default:
+                break;
+            }
+        }
+    } analyzer;
+    root->traverse(analyzer);
+
+    if(analyzer.table.lookup("main")==NULL){
+        analyzer.errors.push_back(Errors::missingMainFunction());
+    }
+
+    return analyzer.errors;
 }

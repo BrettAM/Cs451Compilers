@@ -171,7 +171,15 @@ namespace AST{
         virtual void print(const Element* n, std::ostringstream& s) = 0;
     };
 
-    enum ElementType { VALUE, DECLARATION, CALL, OPERATION, CONTROL, COMPOUND };
+    enum ElementType {
+        VALUE,
+        DECLARATION,
+        FUNCTIONDECL,
+        CALL,
+        OPERATION,
+        CONTROL,
+        COMPOUND,
+    };
 
     class Element: public Node {
     private:

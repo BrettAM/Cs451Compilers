@@ -5,6 +5,7 @@
 #include "Type.hpp"
 #include "Error.hpp"
 #include "AST.hpp"
+#include "SymbolTable.hpp"
 
 namespace Semantics{
     typedef struct ChkResult {

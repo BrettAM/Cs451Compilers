@@ -19,7 +19,13 @@ public:
         : lineno(line), description(description){}
     std::string toString() const {
         std::ostringstream oss;
-        oss << "ERROR(" << lineno << "): " << description;
+        oss << "ERROR(";
+        if(lineno >= 0){
+            oss << lineno;
+        } else {
+            oss << "LINKER";
+        }
+        oss << "): " << description;
         return oss.str();
     }
 };
@@ -42,6 +48,7 @@ namespace Errors{
     Error* opDoesntAcceptArrays(const Token* op);
     Error* opOnlyAcceptsArrays(const Token* op);
     Error* unaryTypeMismatch(const Token* op, Type found, Type required);
+    Error* missingMainFunction();
 }
 
 #endif

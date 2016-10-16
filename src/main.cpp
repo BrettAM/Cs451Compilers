@@ -40,6 +40,7 @@ int main(int argc, char *argv[]) {
 
     for(size_t i=0; i<errors.size(); i++){
         cout << errors[i] << endl;
+        delete errors[i];
     }
     if(printTree){
         cout << r.getAST()->formatTree(false);
