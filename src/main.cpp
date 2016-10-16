@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
     }
 
     ParseDriver::Result r = ParseDriver::run(input);
-    cout << r.getAST()->formatTree();
+    cout << r.getAST()->formatTree(true);
     cout << "Number of warnings: 0" << endl;
     cout << "Number of errors: 0" << endl;
     r.cleanup();

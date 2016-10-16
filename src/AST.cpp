@@ -43,9 +43,12 @@ std::vector<Node*> AST::scrubLeaves(const std::vector<Node*>& nodes){
  * It should set up the output stream and print elements common to all
  * element lines
  */
-std::string PrintStyle::toString(const Element* n){
+std::string PrintStyle::toString(const Element* n, bool types){
     std::ostringstream oss;
     this->print(n, oss);
+    if(types){
+        oss << " " << n->type.typeBox();
+    }
     oss << " " << n->token->lineBox();
     return oss.str();
 }

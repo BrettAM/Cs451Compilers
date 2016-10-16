@@ -58,6 +58,17 @@ public:
         oss << " of type " << raw;
         return oss.str();
     }
+    std::string typeBox() const {
+        std::ostringstream oss;
+        oss << "[";
+        if(this->rawString() == NONE.rawString()){
+            oss<<"undefined type";
+        } else {
+            oss<<"type "<<this->rawString();
+        }
+        oss << "]";
+        return oss.str();
+    }
     /**
      * Detemine if two Type objects are semantically equal
      */

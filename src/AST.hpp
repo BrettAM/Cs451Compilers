@@ -60,7 +60,8 @@ namespace AST{
         /**
          * Print the human readable description of this single node
          */
-        virtual std::string toString() const = 0;
+        virtual std::string toString(bool printTypes) const = 0;
+        std::string toString() const { return toString(false); }
         /**
          * Recursivly check if two nodes contain the equally valued trees
          */
@@ -70,18 +71,19 @@ namespace AST{
         /**
          * format the human readable description of the tree rooted here
          */
-        std::string formatTree() {
+        std::string formatTree() { return formatTree(false); }
+        std::string formatTree(bool types) {
             std::ostringstream oss;
-            formatTree(0, "", oss);
+            formatTree(0, "", oss, types);
             return oss.str();
         }
-        virtual void formatTree(int indentlvl, std::string prefix, std::ostream& out) {
-            out << prefix << this->toString() << std::endl;
+        virtual void formatTree(int indentlvl, std::string prefix, std::ostream& out, bool types) {
+            out << prefix << this->toString(types) << std::endl;
             for(int i=0, size=children.size(); i<size; i++){
                 std::ostringstream oss;
                 for(int indent=0; indent<indentlvl; indent++){ oss << "!   "; }
                 oss << "Child: " << i << "  ";
-                children.at(i)->formatTree(indentlvl+1, oss.str(), out);
+                children.at(i)->formatTree(indentlvl+1, oss.str(), out, types);
             }
         }
         /**
@@ -129,19 +131,19 @@ namespace AST{
     private:
     public:
         SiblingList(std::vector<Node*> children): Node(NULL, scrubLeaves(children)) {}
-        std::string toString() const { return "Sibling List"; }
-        void formatTree(int indentlvl, std::string prefix, std::ostream& out) {
+        std::string toString(bool types) const { return "Sibling List"; }
+        void formatTree(int indentlvl, std::string prefix, std::ostream& out, bool types) {
             // if siblings are on the base line, they can't "retract" one level
             // correctly without a cludge like this
             if(indentlvl == 0) indentlvl++;
 
             if(children.size() == 0) return;
-            children.at(0)->formatTree(indentlvl, prefix, out);
+            children.at(0)->formatTree(indentlvl, prefix, out,types);
             for(int i=1, size=children.size(); i<size; i++){
                 std::ostringstream oss;
                 for(int indent=1; indent<indentlvl; indent++){ oss << "!   "; }
                 oss << "Sibling: " << i-1 << "  ";
-                children.at(i)->formatTree(indentlvl, oss.str(), out);
+                children.at(i)->formatTree(indentlvl, oss.str(), out, types);
             }
         }
     protected:
@@ -153,8 +155,8 @@ namespace AST{
     class LeafNode: public Node {
     public:
         LeafNode(): Node(NULL) {}
-        std::string toString() const { return ""; }
-        void formatTree(int indentlvl, std::string s, std::ostream& out) {}
+        std::string toString(bool types) const { return ""; }
+        void formatTree(int indentlvl, std::string s, std::ostream& out, bool types) {}
     protected:
         virtual bool equals(const Node& n) const {
             return dynamic_cast<LeafNode const *>(&n) != NULL;
@@ -164,7 +166,7 @@ namespace AST{
     class Element;
     class PrintStyle {
     public:
-        std::string toString(const Element* n);
+        std::string toString(const Element* n, bool types);
     protected:
         virtual void print(const Element* n, std::ostringstream& s) = 0;
     };
@@ -179,7 +181,7 @@ namespace AST{
         Element(ElementType nodeType, PrintStyle* printer,
                 const Token* token, std::vector<Node*> children):
             Node(token, children), printer(printer), nodeType(nodeType) {}
-        std::string toString() const { return printer->toString(this); }
+        std::string toString(bool types) const { return printer->toString(this, types); }
     protected:
         virtual bool equals(const Node& n) const {
             if(Element const * p = dynamic_cast<Element const *>(&n)){
