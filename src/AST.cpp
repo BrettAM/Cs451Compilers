@@ -158,15 +158,21 @@ Node* AST::FuncDecl(const IdToken* t, Type rtnt, Node* params, Node* compnd){
 }
 Node* AST::Compound(const Token* t, Node* inits, Node* stmts){
     static LabelPrinter printer("Compound");
-    return new Element(COMPOUND, &printer, t, listof<Node*>() << inits << stmts);
+    Element* e = new Element(COMPOUND, &printer, t, listof<Node*>() << inits << stmts);
+    e->type = Type::VOID;
+    return e;
 }
 Node* AST::IfNode(const Token* t, Node* cond, Node* tcase, Node* fcase){
     static LabelPrinter printer("If");
-    return new Element(CONTROL, &printer, t, listof<Node*>() << cond << tcase << fcase);
+    Element* e = new Element(CONTROL, &printer, t, listof<Node*>() << cond << tcase << fcase);
+    e->type = Type::VOID;
+    return e;
 }
 Node* AST::WhileNode(const Token* t, Node* cond, Node* stmts){
     static LabelPrinter printer("While");
-    return new Element(CONTROL, &printer, t, listof<Node*>() << cond << stmts);
+    Element* e = new Element(CONTROL, &printer, t, listof<Node*>() << cond << stmts);
+    e->type = Type::VOID;
+    return e;
 }
 Node* AST::ReturnNode(const Token* t, Node* expr){
     static LabelPrinter printer("Return");

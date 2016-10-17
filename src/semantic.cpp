@@ -89,24 +89,14 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
                         break;
                     }
 
-                    ChkResult res = checkCall(e, func);
-                    if(!res.passed){
-                        errors.push_back(res.error);
-                        break;
-                    }
-                    resultType = res.result;
+                    resultType = checkCall(e, func, errors);
                 } break;
                 /**
                  * Check that an operation is performed on subtrees of valid
                  *   types and find its resulting type.
                  */
                 case OPERATION:{
-                    ChkResult res = checkOperands(e);
-                    if(!res.passed){
-                        errors.push_back(res.error);
-                        break;
-                    }
-                    resultType = res.result;
+                    resultType = checkOperands(e, errors);
                 } break;
                 default:
                 break;
@@ -124,16 +114,16 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
 
     return analyzer.errors;
 }
-ChkResult Semantics::checkCall(AST::Node* call, AST::Node* f){
+Type Semantics::checkCall(Node* call, Node* f, vector<Error*>& errors){
     Element* function = dynamic_cast<Element *>(f);
 
     if(function->nodeType != FUNCTIONDECL){
-        return ChkResult(Errors::cannotBeCalled(f->token));
+        errors.push_back(Errors::cannotBeCalled(f->token));
     }
 
-    return ChkResult(function->type.returnType());
+    return function->type.returnType();
 }
-ChkResult Semantics::checkOperands(AST::Node* opNode){
+Type Semantics::checkOperands(Node* opNode, vector<Error*>& errors){
     Element* e = dynamic_cast<Element *>(opNode);
     Element* lhNode = dynamic_cast<Element *>(e->getChild(0));
     Element* rhNode = dynamic_cast<Element *>(e->getChild(1));
@@ -146,38 +136,49 @@ ChkResult Semantics::checkOperands(AST::Node* opNode){
     // also if its not unary and the other side is none, don't issue errors
     //   but do return the correct type for further checking
 
+/*
+    '[' -> indexing
+    NOTEQ, LESSEQ, EQ, GRTEQ, '<', '>' -> comparison
+    MULASS, ADDASS, SUBASS, DIVASS, '+', '-', '*', '/', '%' -> intops
+    AND, OR -> boolean
+    '=' -> assignment
+    INC, DEC, NOT, '*', '?' -> unary
+    RETURN
+*/
     //"ERROR(%d): Cannot index nonarray '%s'.\n"
     //"ERROR(%d): Cannot index nonarray.\n"
     //"ERROR(%d): Array index is the unindexed array '%s'.\n"
     //"ERROR(%d): Array '%s' should be indexed by type int but got %s.\n"
     if(op == '[') {
         if(!lhs.isArray()) {
-            return ChkResult((lhNode->nodeType == VALUE)
+            errors.push_back((lhNode->nodeType == VALUE)
                 ? Errors::cannotIndexNonarray(lhNode->token)
                 : Errors::cannotIndexNonarray(lhNode->token->line)
                 );
         }
 
         if(rhs.isArray()){
-            return ChkResult(Errors::arrayIndexedByArray(rhNode->token));
+            errors.push_back(Errors::arrayIndexedByArray(rhNode->token));
         }
 
         if(rhs != Type::INT){
-            return ChkResult(Errors::badArrayIndex(lhNode->token, rhs));
+            errors.push_back(Errors::badArrayIndex(lhNode->token, rhs));
         }
 
-        return ChkResult(lhs.returnType());
+        return lhs.returnType();
     }
 
     //"ERROR(%d): Cannot return an array.\n"
     if(op == RETURN){
         if(lhs.isArray()){
-            return ChkResult(Errors::cannotReturnArray(lhNode->token));
+            errors.push_back(Errors::cannotReturnArray(lhNode->token));
         }
 
-        return ChkResult(Type::VOID);
+        return Type::VOID;
     }
 
+
+/*
     //"ERROR(%d): Unary '%s' requires an operand of type %s but was given %s.\n"
     //"ERROR(%d): The operation '%s' does not work with arrays.\n"
     //"ERROR(%d): The operation '%s' only works with arrays.\n"
@@ -221,15 +222,6 @@ ChkResult Semantics::checkOperands(AST::Node* opNode){
     // unary requires lhs x
     // return type
 
-/*
-    '[' -> indexing
-    NOTEQ, LESSEQ, EQ, GRTEQ, '<', '>' -> comparison
-    MULASS, ADDASS, SUBASS, DIVASS, '+', '-', '*', '/', '%' -> intops
-    AND, OR -> boolean
-    '=' -> assignment
-    INC, DEC, NOT, '*', '?' -> unary
-    RETURN
-*/
 
     // comparisons
     typedef struct ComparisonSpec{
@@ -311,5 +303,44 @@ ChkResult Semantics::checkOperands(AST::Node* opNode){
         return ChkResult(Errors::mismatchedLR(e->token, lhs, rhs));
     }
 
-    return ChkResult(lhs);
+    return ChkResult(lhs);*/
+
+/*
+    '[' -> indexing
+    NOTEQ, LESSEQ, EQ, GRTEQ, '<', '>' -> comparison
+    MULASS, ADDASS, SUBASS, DIVASS, '+', '-', '*', '/', '%' -> intops
+    AND, OR -> boolean
+    '=' -> assignment
+    INC, DEC, NOT, '*', '?' -> unary
+    RETURN
+*/
+
+
+    typedef struct ResultType{
+        int op;
+        Type result;
+    } ResultType;
+    ResultType results[] = {
+        {NOTEQ, Type::BOOL},
+        {LESSEQ, Type::BOOL},
+        {EQ, Type::BOOL},
+        {GRTEQ, Type::BOOL},
+        {'<', Type::BOOL},
+        {'>', Type::BOOL},
+        {AND, Type::BOOL},
+        {OR, Type::BOOL},
+        {NOT, Type::BOOL},
+        {'=', Type::NONE}
+    };
+    for(size_t i=0; i<sizeof(results)/sizeof(results[0]); i++){
+        ResultType spec = results[i];
+        if(op != spec.op) continue;
+
+        return (spec.result == Type::NONE)
+                ? lhs
+                : spec.result;
+    }
+
+    // all other operations return INT
+    return Type::INT;
 }

@@ -9,22 +9,20 @@
 #include "ParseDefines.hpp"
 
 namespace Semantics{
-    typedef struct ChkResult {
-        ChkResult(Type t): passed(true), error(NULL), result(t) {}
-        ChkResult(Error* e): passed(false), error(e), result(Type::NONE) {}
-        bool passed;
-        Error* error;
-        Type result;
-    } ChkResult;
     /**
      * Check if the code at `call` is a valid invocation of `function`
-     * return NULL if its correct, or a new Error* if not
+     * Push any detected errors into `errors`
+     * return the calls result type
      */
-    ChkResult checkCall(AST::Node* call, AST::Node* function);
+    Type checkCall(AST::Node* call,
+                   AST::Node* function,
+                   std::vector<Error*>& errors);
     /**
      * Check if an invocation of a given operator is valid on the given nodes
+     * pushes errors to into `errors`
+     * returns the result type
      */
-    ChkResult checkOperands(AST::Node* op);
+    Type checkOperands(AST::Node* op, std::vector<Error*>& errors);
     /**
      * Analyse an AST and return a list of detected errors
      * This will result in the `type` field at each node being filled in where
