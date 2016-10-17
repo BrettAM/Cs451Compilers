@@ -129,9 +129,10 @@ namespace AST{
             : type(Type::NONE), token(token), children(scrubNulls(children)) {
         }
         virtual bool equals(const Node& n) const {
-            bool tokensEqual = (token == NULL && n.token == NULL)
-                                || *token==*n.token;
+            bool tokensEqual = (token == NULL && n.token == NULL) ||
+                                ((token != NULL) && (*token==*n.token));
             if(!tokensEqual) return false;
+            if(type != n.type) return false;
             if(children.size() != n.children.size()) return false;
             for(size_t i=0; i<children.size(); i++){
                 if( !(*children[i] == *n.children[i]) ) return false;
