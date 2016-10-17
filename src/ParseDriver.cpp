@@ -74,7 +74,9 @@ void ParseDriver::rootAST(Node * AST){
 }
 
 void ParseDriver::pushError(const char * msg){
-    error = new Error(Error::SYNTAX, msg);
+    std::ostringstream oss;
+    oss << msg << " on line " << yylineno;
+    error = new Error(Error::SYNTAX, oss.str());
 }
 
 void ParseDriver::pushGlobal(const Token* record){

@@ -140,24 +140,11 @@ ChkResult Semantics::checkOperands(AST::Node* opNode){
     Type lhs = (lhNode != NULL)? lhNode->type.runtime() : Type::NONE;
     Type rhs = (rhNode != NULL)? rhNode->type.runtime() : Type::NONE;
     int op = opNode->token->token;
-/*
-    cout << "Operation " << opNode->token->text << " Called on "
-         << lhs << " and " << rhs << endl;
-*/
-    // we don't emit multiple errors, so if lhs is wrong just ignore this op
-    //if(lhs == Type::NONE) return ChkResult(Type::NONE);
-    // also if its not unary and the other side is none, don't issue errors
-    // but do return the correct type for further checking
 
-/*
-    '[' -> indexing
-    NOTEQ, LESSEQ, EQ, GRTEQ, '<', '>' -> comparison
-    MULASS, ADDASS, SUBASS, DIVASS, '=' -> assignment
-    '+', '-', '*', '/', '%' -> intops
-    INC, DEC, NOT, '*', '?' -> unary
-    AND, OR -> boolean
-    RETURN
-*/
+    // we don't emit multiple errors, so if lhs is wrong just ignore this op
+    //    if(lhs == Type::NONE) return ChkResult(Type::NONE);
+    // also if its not unary and the other side is none, don't issue errors
+    //   but do return the correct type for further checking
 
     //"ERROR(%d): Cannot index nonarray '%s'.\n"
     //"ERROR(%d): Cannot index nonarray.\n"
@@ -191,12 +178,138 @@ ChkResult Semantics::checkOperands(AST::Node* opNode){
         return ChkResult(Type::VOID);
     }
 
+    //"ERROR(%d): Unary '%s' requires an operand of type %s but was given %s.\n"
     //"ERROR(%d): The operation '%s' does not work with arrays.\n"
     //"ERROR(%d): The operation '%s' only works with arrays.\n"
-    //"ERROR(%d): Unary '%s' requires an operand of type %s but was given %s.\n"
-    //"ERROR(%d): '%s' requires operands of %s but lhs is of %s.\n"
-    //"ERROR(%d): '%s' requires operands of %s but rhs is of %s.\n"
-    //"ERROR(%d): '%s' requires operands of the same type but lhs is %s and rhs is %s.\n"
+    typedef struct UnarySpecs{
+        int op;
+        bool arrays;
+        Type requiredLhs;
+        Type returnType;
+    } UnarySpecs;
+    UnarySpecs unaries[] = {
+        {INC, false, Type::INT,  Type::INT},
+        {DEC, false, Type::INT,  Type::INT},
+        {NOT, false, Type::BOOL, Type::BOOL},
+        {'*',  true, Type::NONE, Type::INT},
+        {'?',  true, Type::NONE, Type::INT},
+    };
+    for(size_t i=0; i<sizeof(unaries)/sizeof(unaries[0]); i++){
+        UnarySpecs spec = unaries[i];
+        if(op != spec.op) continue;
 
-    return ChkResult(Type::NONE);
+        //ignore lhs undefined
+
+        if(spec.arrays && !lhs.isArray()){
+            return ChkResult(Errors::opOnlyAcceptsArrays(e->token));
+        }
+        if(!spec.arrays && lhs.isArray()){
+            return ChkResult(Errors::opDoesntAcceptArrays(e->token));
+        }
+        if(spec.requiredLhs != Type::NONE && spec.requiredLhs != lhs){
+            return ChkResult(Errors::unaryTypeMismatch(
+                e->token, lhs, spec.requiredLhs)
+            );
+        }
+        return ChkResult(spec.returnType);
+    }
+
+    // not work with arrays
+    // only works with arrays
+    // requires lhs x
+    // requires rhs x
+    // unary requires lhs x
+    // return type
+
+/*
+    '[' -> indexing
+    NOTEQ, LESSEQ, EQ, GRTEQ, '<', '>' -> comparison
+    MULASS, ADDASS, SUBASS, DIVASS, '+', '-', '*', '/', '%' -> intops
+    AND, OR -> boolean
+    '=' -> assignment
+    INC, DEC, NOT, '*', '?' -> unary
+    RETURN
+*/
+
+    // comparisons
+    typedef struct ComparisonSpec{
+        int op;
+        bool onlyIntegralTypes;
+    } ComparisonSpec;
+    ComparisonSpec comparisons[] = {
+        {NOTEQ, false},
+        {   EQ, false},
+        {LESSEQ, true},
+        { GRTEQ, true},
+        {   '>', true},
+        {   '<', true},
+    };
+    for(size_t i=0; i<sizeof(comparisons)/sizeof(comparisons[0]); i++){
+        ComparisonSpec spec = comparisons[i];
+        if(op != spec.op) continue;
+
+        //ignore lhs undefined
+        // these should also set the type but ChkResult makes them none?
+        if(spec.onlyIntegralTypes && (lhs.isArray() || rhs.isArray())){
+            return ChkResult(Errors::opDoesntAcceptArrays(e->token));
+        }
+        if(spec.onlyIntegralTypes && !(lhs == Type::INT || lhs == Type::CHAR)){
+            return ChkResult(Errors::incorrectLHS(e->token, lhs, "type char or type int"));
+        }
+        if(spec.onlyIntegralTypes && !(rhs == Type::INT || rhs == Type::CHAR)){
+            return ChkResult(Errors::incorrectRHS(e->token, rhs, "type char or type int"));
+        }
+        if(lhs != rhs){
+            return ChkResult(Errors::mismatchedLR(e->token, lhs, rhs));
+        }
+        return ChkResult(Type::BOOL);
+    }
+
+    // binary ops
+    typedef struct BinarySpec{
+        int op;
+        Type type;
+    } BinarySpec;
+    BinarySpec binaries[] = {
+        {MULASS, Type::INT},
+        {ADDASS, Type::INT},
+        {SUBASS, Type::INT},
+        {DIVASS, Type::INT},
+        {'+', Type::INT},
+        {'-', Type::INT},
+        {'*', Type::INT},
+        {'/', Type::INT},
+        {'%', Type::INT},
+        {AND, Type::BOOL},
+        {OR, Type::BOOL},
+    };
+    for(size_t i=0; i<sizeof(binaries)/sizeof(binaries[0]); i++){
+        BinarySpec spec = binaries[i];
+        if(op != spec.op) continue;
+
+        // these should also set the type but ChkResult makes them none?
+        if(lhs.isArray() || rhs.isArray()){
+            return ChkResult(Errors::opDoesntAcceptArrays(e->token));
+        }
+        if(lhs != spec.type){
+            return ChkResult(Errors::incorrectLHS(e->token, lhs, spec.type.toString()));
+        }
+        if(rhs != spec.type){
+            return ChkResult(Errors::incorrectRHS(e->token, rhs, spec.type.toString()));
+        }
+        if(rhs != rhs){
+            return ChkResult(Errors::mismatchedLR(e->token, lhs, rhs));
+        }
+        return ChkResult(spec.type);
+    }
+
+    //assignment
+    if(lhs.isArray() || rhs.isArray()){
+        return ChkResult(Errors::opDoesntAcceptArrays(e->token));
+    }
+    if(lhs != rhs){
+        return ChkResult(Errors::mismatchedLR(e->token, lhs, rhs));
+    }
+
+    return ChkResult(lhs);
 }

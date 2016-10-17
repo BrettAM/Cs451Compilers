@@ -24,14 +24,13 @@ Error* Errors::cannotBeCalled(const Token* t){
         "\'"<<t->text<<"\' is a simple variable and cannot be called."
     );
 }
-Error* Errors::incorrectLHS(const Token* t, Type found, Type required){
-    return new Error(0,"'%s' requires operands of %s but lhs is of %s.");
+Error* Errors::incorrectLHS(const Token* t, Type found, std::string required){
     rtnErr(t->line,
         "\'"<<t->text<<"\' requires operands of "<<required
             <<" but lhs is of " << found << "."
     );
 }
-Error* Errors::incorrectRHS(const Token* t, Type found, Type required){
+Error* Errors::incorrectRHS(const Token* t, Type found, std::string required){
     rtnErr(t->line,
         "\'"<<t->text<<"\' requires operands of "<<required
             <<" but rhs is of " << found << "."
@@ -82,17 +81,17 @@ Error* Errors::notDefined(const Token* t){
 }
 Error* Errors::opDoesntAcceptArrays(const Token* op){
     rtnErr(op->line,
-        "The operation  \'"<<op->text<<"\' does not work with arrays."
+        "The operation \'"<<op->text<<"\' does not work with arrays."
     );
 }
 Error* Errors::opOnlyAcceptsArrays(const Token* op){
     rtnErr(op->line,
-        "The operation  \'"<<op->text<<"\' only works with arrays."
+        "The operation \'"<<op->text<<"\' only works with arrays."
     );
 }
 Error* Errors::unaryTypeMismatch(const Token* op, Type found, Type required){
     rtnErr(op->line,
-        "Unary  \'"<<op->text<<"\' requires an operand of type "<<required
+        "Unary \'"<<op->text<<"\' requires an operand of type "<<required
             << " but was given " << found;
     );
 }
