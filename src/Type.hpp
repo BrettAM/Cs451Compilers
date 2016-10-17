@@ -8,33 +8,55 @@
 
 class Type{
 private:
-    const cstr raw;
-    const bool _array, _static;
+    cstr raw;
+    bool _array, _static, _func;
     Type(cstr str, bool _array, bool _static):
-        raw(str), _array(_array), _static(_static) {}
+        raw(str), _array(_array), _static(_static), _func(false) {}
+    Type(cstr str, bool _array, bool _static, bool _func):
+        raw(str), _array(_array), _static(_static), _func(_func) {}
 public:
     static const Type INT;
     static const Type BOOL;
     static const Type VOID;
     static const Type CHAR;
+    static const Type NONE;
     static Type RECORD(/*record pointer*/){ return Type("record", false, false); }
     /** Return an array type of length `length` of this type */
-    Type mkArray(int length) const {
+    Type asArray(int length) const {
         assert(!_array); // no arrays of arrays in c-
         return Type(raw, true, _static);
     }
     /** Return an static type of this type */
-    Type mkStatic() const {
+    Type asStatic() const {
         return Type(raw, _array, true);
+    }
+    Type asFunc() const {
+        return Type(raw, false, false, true);
+    }
+    Type returnType() const {
+        if(_func || _array){
+            return Type(raw, false, false, false);
+        } else {
+            return NONE;
+        }
+    }
+    /**
+     * Get a version of this type representing its runtime meaning
+     * For now, this just cleares the static field because a static int
+     * is assignable to an int field etc.
+     */
+    Type runtime() const {
+        return Type(raw, _array, false, _func);
     }
     bool isArray() const { return _array; }
     bool isStatic() const { return _static; }
+    bool isFunction() const { return _func; }
     const cstr rawString() const { return raw; }
     /**
      * Return a sentence predicate that qualifies a prefixed id name as this
      * type
      */
-    std::string toString() const {
+    std::string predicate() const {
         std::ostringstream oss;
         if(_array || _static){
             oss << " is";
@@ -44,6 +66,31 @@ public:
         oss << " of type " << raw;
         return oss.str();
     }
+    std::string toString() const {
+        std::ostringstream oss;
+        if(_func){
+            oss << "Function returning ";
+        }
+        if(_static){
+            oss << "static ";
+        }
+        oss << raw;
+        if(_array){
+            oss << " array";
+        }
+        return oss.str();
+    }
+    std::string typeBox() const {
+        std::ostringstream oss;
+        oss << "[";
+        if(this->rawString() == NONE.rawString()){
+            oss<<"undefined type";
+        } else {
+            oss<<"type "<<this->rawString();
+        }
+        oss << "]";
+        return oss.str();
+    }
     /**
      * Detemine if two Type objects are semantically equal
      */
@@ -51,6 +98,9 @@ public:
         return raw == n.raw &&
                _array == n._array &&
                _static == n._static;
+    }
+    bool operator!=(const Type& n) const {
+        return !(*this == n);
     }
 };
 std::ostream& operator<<(std::ostream&, const Type&);

@@ -8,17 +8,21 @@
 #include <map>
 #include "Token.hpp"
 #include "AST.hpp"
+#include "Error.hpp"
 
 namespace ParseDriver {
     class Result {
     private:
         std::vector<const Token*>* tokens;
         AST::Node* AST;
+        Error* error;
     public:
-        Result(std::vector<const Token*>* tokens, AST::Node* AST):
-            tokens(tokens), AST(AST) {}
+        Result(std::vector<const Token*>* tokens, AST::Node* AST, Error* error):
+            tokens(tokens), AST(AST), error(error) {}
         const std::vector<const Token*>* getTokens() const { return tokens; }
         AST::Node* getAST() const { return AST; }
+        bool getErrorFlag() const { return error != NULL; }
+        Error* getError() const { return error; }
         /**
          * Free all the memory associated with the result. All references
          * to the original tokens and AST become invalid.

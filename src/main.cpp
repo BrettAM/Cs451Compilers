@@ -2,15 +2,24 @@
 #include <vector>
 #include <unistd.h>
 #include "ParseDriver.hpp"
+#include "Error.hpp"
+#include "semantic.hpp"
 using namespace std;
 
 int main(int argc, char *argv[]) {
+    bool printTree = false, printTypedTree = false;
+
     char c;
-    while ((c = getopt (argc, argv, "d")) != -1)
+    while ((c = getopt (argc, argv, "dpP")) != -1)
         switch (c) {
             case 'd':
                 ParseDriver::enableDebug();
                 break;
+            case 'p':
+                printTree = true;
+                break;
+            case 'P':
+                printTypedTree = true;
             default:
                 break;
         }
@@ -27,11 +36,23 @@ int main(int argc, char *argv[]) {
     }
 
     ParseDriver::Result r = ParseDriver::run(input);
-    cout << r.getAST()->formatTree();
-    cout << "Number of warnings: 0" << endl;
-    cout << "Number of errors: 0" << endl;
-    r.cleanup();
+    vector<Error*> errors = Semantics::analyze(r.getAST());
 
+    if(r.getErrorFlag()) cout << r.getError() << endl;
+    for(size_t i=0; i<errors.size(); i++){
+        cout << errors[i] << endl;
+        delete errors[i];
+    }
+    if(printTree){
+        cout << r.getAST()->formatTree(false);
+    }
+    if(printTypedTree){
+        cout << r.getAST()->formatTree(true);
+    }
+    cout << "Number of warnings: 0" << endl;
+    cout << "Number of errors: " << errors.size() << endl;
+
+    r.cleanup();
     if(input != stdin) fclose(input);
     return 0;
 }

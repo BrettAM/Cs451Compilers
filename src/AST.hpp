@@ -53,12 +53,15 @@ namespace AST{
      */
     class Node {
     public:
+        Type type;
+
         const Token * token;
         virtual ~Node(){};
         /**
          * Print the human readable description of this single node
          */
-        virtual std::string toString() const = 0;
+        virtual std::string toString(bool printTypes) const = 0;
+        std::string toString() const { return toString(false); }
         /**
          * Recursivly check if two nodes contain the equally valued trees
          */
@@ -68,41 +71,62 @@ namespace AST{
         /**
          * format the human readable description of the tree rooted here
          */
-        std::string formatTree() {
+        std::string formatTree() { return formatTree(false); }
+        std::string formatTree(bool types) {
             std::ostringstream oss;
-            formatTree(0, "", oss);
+            formatTree(0, "", oss, types);
             return oss.str();
         }
-        virtual void formatTree(int indentlvl, std::string prefix, std::ostream& out) {
-            out << prefix << this->toString() << std::endl;
+        virtual void formatTree(int indentlvl, std::string prefix, std::ostream& out, bool types) {
+            out << prefix << this->toString(types) << std::endl;
             for(int i=0, size=children.size(); i<size; i++){
                 std::ostringstream oss;
                 for(int indent=0; indent<indentlvl; indent++){ oss << "!   "; }
                 oss << "Child: " << i << "  ";
-                children.at(i)->formatTree(indentlvl+1, oss.str(), out);
+                children.at(i)->formatTree(indentlvl+1, oss.str(), out, types);
             }
         }
         /**
-         * Call <OP> on each node after <OP> has been called on all its
-         * children
+         * Call a pre and/or post method while traversing the tree from
+         * this location
          */
-        template <void (*OP)(Node*)> void postorder(){
+        class Traverser {
+        public:
+            /** Called before a node's children are traversed */
+            virtual void pre(Node *){}
+            /** Called after a node's children are traversed */
+            virtual void post(Node *){}
+        };
+        void traverse(Traverser& t){
+            t.pre(this);
             for(int i=0, size=children.size(); i<size; i++){
-                children.at(i)->postorder<OP>();
+                children.at(i)->traverse(t);
             }
-            OP(this);
+            t.post(this);
         }
         /**
          * Call to recursivly delete each tree node
          */
         void deleteTree() {
-            this->postorder<deleteNode>();
+            class Deleter : public Traverser {
+                void post(Node * n){ deleteNode(n); }
+            } deleter;
+            this->traverse(deleter);
+        }
+        /**
+         * Return the pointer to this node's i'th child, or NULL if it doesn't
+         *   exist.
+         */
+        Node* getChild(size_t i){
+            if(i < 0 || i >= children.size()) return NULL;
+            return children[i];
         }
     protected:
         std::vector<Node*> children;
-        Node(const Token* token): token(token), children() {}
+        Node(const Token* token)
+            : type(Type::NONE), token(token), children() {}
         Node(const Token* token, const std::vector<Node*>& children)
-            : token(token), children(scrubNulls(children)) {
+            : type(Type::NONE), token(token), children(scrubNulls(children)) {
         }
         virtual bool equals(const Node& n) const {
             bool tokensEqual = (token == NULL && n.token == NULL)
@@ -122,19 +146,19 @@ namespace AST{
     private:
     public:
         SiblingList(std::vector<Node*> children): Node(NULL, scrubLeaves(children)) {}
-        std::string toString() const { return "Sibling List"; }
-        void formatTree(int indentlvl, std::string prefix, std::ostream& out) {
+        std::string toString(bool types) const { return "Sibling List"; }
+        void formatTree(int indentlvl, std::string prefix, std::ostream& out, bool types) {
             // if siblings are on the base line, they can't "retract" one level
             // correctly without a cludge like this
             if(indentlvl == 0) indentlvl++;
 
             if(children.size() == 0) return;
-            children.at(0)->formatTree(indentlvl, prefix, out);
+            children.at(0)->formatTree(indentlvl, prefix, out,types);
             for(int i=1, size=children.size(); i<size; i++){
                 std::ostringstream oss;
                 for(int indent=1; indent<indentlvl; indent++){ oss << "!   "; }
                 oss << "Sibling: " << i-1 << "  ";
-                children.at(i)->formatTree(indentlvl, oss.str(), out);
+                children.at(i)->formatTree(indentlvl, oss.str(), out, types);
             }
         }
     protected:
@@ -143,87 +167,50 @@ namespace AST{
         }
     };
 
-    enum DeclType { VAR, PARAM, FUNC };
-    class Decl: public Node {
-    private:
-        const DeclType dt;
-        Type type;
-    public:
-        Decl(DeclType dt, const IdToken* tok, Type type, std::vector<Node*> ln):
-            Node(tok, ln), dt(dt), type(type) {}
-        std::string toString() const {
-            std::ostringstream oss;
-            switch(dt){
-                case VAR:   oss << "Var "; break;
-                case PARAM: oss << "Param "; break;
-                case FUNC:
-                    oss << "Func " << token->nodeLabel() << " returns type ";
-                    oss << type.rawString() << " " << token->lineBox();
-                    return oss.str();
-            }
-            oss << token->nodeLabel() << type << " " << token->lineBox();
-            return oss.str();
-        }
-    protected:
-        virtual bool equals(const Node& n) const {
-            if(Decl const * p = dynamic_cast<Decl const *>(&n)){
-                return dt == p->dt && type == p->type;
-            }
-            return false;
-        }
-    };
-
-    class Record: public Node {
-    private:
-    public:
-        Record(const Token* token, std::vector<Node*> children):
-            Node(token, children) {}
-        std::string toString() const {
-            std::ostringstream oss;
-            oss << "Record " << token->nodeLabel() << "  " << token->lineBox();
-            return oss.str();
-        }
-    protected:
-        virtual bool equals(const Node& n) const {
-            return dynamic_cast<Record const *>(&n) != NULL;
-        }
-    };
-
-    class Value: public Node {
-    private:
-        bool pt;
-        cstr label;
-    public:
-        Value(const Token* token, cstr label, std::vector<Node*> children):
-            Node(token, children), pt(true), label(label) {}
-        Value(const Token* token, cstr label, bool pt, std::vector<Node*> children):
-            Node(token, children), pt(pt), label(label) {}
-        std::string toString() const {
-            std::ostringstream oss;
-            oss << label;
-            if(pt){
-                oss << token->nodeLabel() << " ";
-            }
-            oss << token->lineBox();
-            return oss.str();
-        }
-    protected:
-        virtual bool equals(const Node& n) const {
-            if(Value const * p = dynamic_cast<Value const *>(&n)){
-                return label == p->label;
-            }
-            return false;
-        }
-    };
-
     class LeafNode: public Node {
     public:
         LeafNode(): Node(NULL) {}
-        std::string toString() const { return ""; }
-        void formatTree(int indentlvl, std::string s, std::ostream& out) {}
+        std::string toString(bool types) const { return ""; }
+        void formatTree(int indentlvl, std::string s, std::ostream& out, bool types) {}
     protected:
         virtual bool equals(const Node& n) const {
             return dynamic_cast<LeafNode const *>(&n) != NULL;
+        }
+    };
+
+    class Element;
+    class PrintStyle {
+    public:
+        std::string toString(const Element* n, bool types);
+    protected:
+        virtual void print(const Element* n, std::ostringstream& s) = 0;
+    };
+
+    enum ElementType {
+        VALUE,
+        DECLARATION,
+        FUNCTIONDECL,
+        CALL,
+        OPERATION,
+        CONTROL,
+        COMPOUND,
+    };
+
+    class Element: public Node {
+    private:
+        PrintStyle* printer;
+    public:
+        const ElementType nodeType;
+        Element(ElementType nodeType, PrintStyle* printer,
+                const Token* token, std::vector<Node*> children):
+            Node(token, children), printer(printer), nodeType(nodeType) {}
+        std::string toString(bool types) const { return printer->toString(this, types); }
+    protected:
+        virtual bool equals(const Node& n) const {
+            if(Element const * p = dynamic_cast<Element const *>(&n)){
+                return nodeType == p->nodeType && printer == p->printer;
+            }
+            return false;
         }
     };
 

@@ -114,7 +114,7 @@ varDeclaration : typeSpecifier varDeclList ';'
             nodelist->add(
               VarDecl(
                 id.id,
-                (id.arraylen == -1)? type : type.mkArray(id.arraylen),
+                (id.arraylen == -1)? type : type.asArray(id.arraylen),
                 id.init
               )
             );
@@ -135,7 +135,7 @@ scopedVarDeclaration : scopedTypeSpecifier varDeclList ';'
             nodelist->add(
               VarDecl(
                 id.id,
-                (id.arraylen == -1)? type : type.mkArray(id.arraylen),
+                (id.arraylen == -1)? type : type.asArray(id.arraylen),
                 id.init
               )
             );
@@ -155,7 +155,7 @@ varDeclId : ID                  { IdComp x = {$1, -1, NULL}; $$ = x; }
           | ID '[' NUMCONST ']' { IdComp x = {$1, ((NumConst*)$3)->value, NULL}; $$ = x; }
           ;
 
-scopedTypeSpecifier : STATIC typeSpecifier { $$ = $2; $$->mkStatic(); }
+scopedTypeSpecifier : STATIC typeSpecifier { $$ = new Type($2->asStatic()); delete $2; }
                     | typeSpecifier
                     ;
 
@@ -168,8 +168,8 @@ returnTypeSpecifier : INT  { $$ = new Type(Type::INT); }
                     | CHAR { $$ = new Type(Type::CHAR); }
                     ;
 
-funDeclaration : typeSpecifier ID '(' params ')' statement { $$ = FuncDecl($2, *$1, $4, $6); delete $1; }
-               | ID '(' params ')' statement               { $$ = FuncDecl($1, Type::VOID, $3, $5); }
+funDeclaration : typeSpecifier ID '(' params ')' statement { $$ = FuncDecl($2, (*$1).asFunc(), $4, $6); delete $1; }
+               | ID '(' params ')' statement               { $$ = FuncDecl($1, Type::VOID.asFunc(), $3, $5); }
                ;
 
 params : paramList   { $$ = Siblings(*($1)); delete $1; }
@@ -194,7 +194,7 @@ paramTypeList : typeSpecifier paramIdList
                     $$->add(
                       Parameter(
                         id.id,
-                        (id.arraylen == -1)? type : type.mkArray(id.arraylen)
+                        (id.arraylen == -1)? type : type.asArray(id.arraylen)
                       )
                     );
                   }
