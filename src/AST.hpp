@@ -105,7 +105,14 @@ namespace AST{
             : token(token), children(scrubNulls(children)) {
         }
         virtual bool equals(const Node& n) const {
-            return token==n.token && children==n.children;
+            bool tokensEqual = (token == NULL && n.token == NULL)
+                                || *token==*n.token;
+            if(!tokensEqual) return false;
+            if(children.size() != n.children.size()) return false;
+            for(size_t i=0; i<children.size(); i++){
+                if( !(*children[i] == *n.children[i]) ) return false;
+            }
+            return true;
         }
     };
     std::ostream& operator<<(std::ostream&, const Node&);
