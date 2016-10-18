@@ -42,11 +42,11 @@ run: $(EXECUTABLE)
 init:
 	mkdir -p $(ODIR)
 
-test: init $(TOBJS) $(TESTS)
+test: init $(TOBJS) $(OBJS)
 	$(CC) $(TESTFLAGS) $(INC) $(OBJS) $(TOBJS) $(TESTLIB) -o $(TESTCMD)
 	./$(TESTCMD)
 
-$(ODIR)/%.o: $(TDIR)/%.cpp $(OBJS)
+$(ODIR)/%.o: $(TDIR)/%.cpp $(HPPS)
 	$(CC) $(TESTFLAGS) $(INC) $(TESTLIB) -c -o $@ $<
 
 tar: test

@@ -36,7 +36,9 @@ std::ostream& operator<<(std::ostream&, const Error*);
 
 namespace Errors{
     Error* cannotBeCalled(const Token* t);
+    Error* incorrectLHS(const Token* t, Type found, Type required);
     Error* incorrectLHS(const Token* t, Type found, std::string required);
+    Error* incorrectRHS(const Token* t, Type found, Type required);
     Error* incorrectRHS(const Token* t, Type found, std::string required);
     Error* mismatchedLR(const Token* t, Type lhs, Type rhs);
     Error* badArrayIndex(const Token* t, Type received);

@@ -31,7 +31,7 @@ TEST(PrintBasic){
 }
 
 TEST(PrintStatic){
-    CHECK_EQUAL(" is static of type bool",
+    CHECK_EQUAL(" of type bool",
                 Type::BOOL.asStatic().predicate()
                 );
 }
@@ -43,7 +43,7 @@ TEST(PrintArray){
 }
 
 TEST(PrintStaticArray){
-    CHECK_EQUAL(" is static array of type bool",
+    CHECK_EQUAL(" is array of type bool",
                 Type::BOOL.asArray(0).asStatic().predicate()
                 );
 }

@@ -43,6 +43,17 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
                     prevEnterWasFunc = true;
                     table.enter(n);
                 } break;
+                /**
+                 * Check for not defined values in the order they appear
+                 */
+                case VALUE:
+                case CALL:{
+                    if(e->type != Type::NONE) break;
+                    Node* def = table.lookup(e->token->text);
+                    if(def == NULL){
+                        errors.push_back(Errors::notDefined(e->token));
+                    }
+                }break;
                 default:
                     break;
             }
@@ -78,7 +89,8 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
                     if(e->type != Type::NONE) break;
                     Node* def = table.lookup(e->token->text);
                     if(def == NULL){
-                        errors.push_back(Errors::notDefined(e->token));
+                        // undefined errors are caught in preorder traversal
+                        break;
                     } else if(def->type.isFunction()) {
                         errors.push_back(Errors::functionUsedAsVar(e->token));
                     } else {
@@ -92,7 +104,7 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
                 case CALL:{
                     Node* func = table.lookup(e->token->text);
                     if(func == NULL){
-                        errors.push_back(Errors::notDefined(e->token));
+                        // undefined errors are caught in preorder traversal
                         break;
                     }
 
@@ -135,11 +147,13 @@ Type Semantics::checkOperands(Node* opNode, vector<Error*>& errors){
     Element* lhNode = dynamic_cast<Element *>(e->getChild(0));
     Element* rhNode = dynamic_cast<Element *>(e->getChild(1));
     Type lhs = (lhNode != NULL)? lhNode->type.runtime() : Type::NONE;
+    Type lhsRaw = lhs.returnType();
     Type rhs = (rhNode != NULL)? rhNode->type.runtime() : Type::NONE;
+    Type rhsRaw = rhs.returnType();
     int op = opNode->token->token;
 
     // we don't emit multiple errors, so if lhs is wrong just ignore this op
-    //    if(lhs == Type::NONE) return ChkResult(Type::NONE);
+    //    if(lhs == Type::NONE) errors.push_back(Type::NONE);
     // also if its not unary and the other side is none, don't issue errors
     //   but do return the correct type for further checking
 
@@ -185,7 +199,6 @@ Type Semantics::checkOperands(Node* opNode, vector<Error*>& errors){
     }
 
 
-/*
     //"ERROR(%d): Unary '%s' requires an operand of type %s but was given %s.\n"
     //"ERROR(%d): The operation '%s' does not work with arrays.\n"
     //"ERROR(%d): The operation '%s' only works with arrays.\n"
@@ -193,33 +206,34 @@ Type Semantics::checkOperands(Node* opNode, vector<Error*>& errors){
         int op;
         bool arrays;
         Type requiredLhs;
-        Type returnType;
     } UnarySpecs;
     UnarySpecs unaries[] = {
-        {INC, false, Type::INT,  Type::INT},
-        {DEC, false, Type::INT,  Type::INT},
-        {NOT, false, Type::BOOL, Type::BOOL},
-        {'*',  true, Type::NONE, Type::INT},
-        {'?',  true, Type::NONE, Type::INT},
+        {INC, false, Type::INT},
+        {DEC, false, Type::INT},
+        {'-', false, Type::INT},
+        {NOT, false, Type::BOOL},
+        {'*',  true, Type::NONE},
+        {'?', false, Type::INT},
     };
-    for(size_t i=0; i<sizeof(unaries)/sizeof(unaries[0]); i++){
-        UnarySpecs spec = unaries[i];
-        if(op != spec.op) continue;
+    if(rhNode == NULL){
+        for(size_t i=0; i<sizeof(unaries)/sizeof(unaries[0]); i++){
+            UnarySpecs spec = unaries[i];
+            if(op != spec.op) continue;
 
-        //ignore lhs undefined
+            if(lhs == Type::NONE) break;
 
-        if(spec.arrays && !lhs.isArray()){
-            return ChkResult(Errors::opOnlyAcceptsArrays(e->token));
+            if(spec.requiredLhs != Type::NONE && spec.requiredLhs != lhsRaw){
+                errors.push_back(Errors::unaryTypeMismatch(
+                    e->token, lhs, spec.requiredLhs)
+                );
+            }
+            if(spec.arrays && !lhs.isArray()){
+                errors.push_back(Errors::opOnlyAcceptsArrays(e->token));
+            }
+            if(!spec.arrays && lhs.isArray()){
+                errors.push_back(Errors::opDoesntAcceptArrays(e->token));
+            }
         }
-        if(!spec.arrays && lhs.isArray()){
-            return ChkResult(Errors::opDoesntAcceptArrays(e->token));
-        }
-        if(spec.requiredLhs != Type::NONE && spec.requiredLhs != lhs){
-            return ChkResult(Errors::unaryTypeMismatch(
-                e->token, lhs, spec.requiredLhs)
-            );
-        }
-        return ChkResult(spec.returnType);
     }
 
     // not work with arrays
@@ -233,35 +247,34 @@ Type Semantics::checkOperands(Node* opNode, vector<Error*>& errors){
     // comparisons
     typedef struct ComparisonSpec{
         int op;
-        bool onlyIntegralTypes;
     } ComparisonSpec;
     ComparisonSpec comparisons[] = {
-        {NOTEQ, false},
-        {   EQ, false},
-        {LESSEQ, true},
-        { GRTEQ, true},
-        {   '>', true},
-        {   '<', true},
+        {LESSEQ},
+        { GRTEQ},
+        {   '>'},
+        {   '<'},
     };
     for(size_t i=0; i<sizeof(comparisons)/sizeof(comparisons[0]); i++){
         ComparisonSpec spec = comparisons[i];
         if(op != spec.op) continue;
 
-        //ignore lhs undefined
-        // these should also set the type but ChkResult makes them none?
-        if(spec.onlyIntegralTypes && (lhs.isArray() || rhs.isArray())){
-            return ChkResult(Errors::opDoesntAcceptArrays(e->token));
+        if(lhs == Type::NONE || rhs == Type::NONE) break;
+
+        bool badTypes = false;
+        if(!(lhsRaw == Type::INT || lhsRaw == Type::CHAR)){
+            badTypes = true;
+            errors.push_back(Errors::incorrectLHS(e->token, lhs, "type char or type int"));
         }
-        if(spec.onlyIntegralTypes && !(lhs == Type::INT || lhs == Type::CHAR)){
-            return ChkResult(Errors::incorrectLHS(e->token, lhs, "type char or type int"));
+        if(!(rhsRaw == Type::INT || rhsRaw == Type::CHAR)){
+            badTypes = true;
+            errors.push_back(Errors::incorrectRHS(e->token, rhs, "type char or type int"));
         }
-        if(spec.onlyIntegralTypes && !(rhs == Type::INT || rhs == Type::CHAR)){
-            return ChkResult(Errors::incorrectRHS(e->token, rhs, "type char or type int"));
+        if(!badTypes && (lhsRaw != rhsRaw)){
+            errors.push_back(Errors::mismatchedLR(e->token, lhs, rhs));
         }
-        if(lhs != rhs){
-            return ChkResult(Errors::mismatchedLR(e->token, lhs, rhs));
+        if(lhs.isArray() || rhs.isArray()){
+            errors.push_back(Errors::opDoesntAcceptArrays(e->token));
         }
-        return ChkResult(Type::BOOL);
     }
 
     // binary ops
@@ -286,31 +299,42 @@ Type Semantics::checkOperands(Node* opNode, vector<Error*>& errors){
         BinarySpec spec = binaries[i];
         if(op != spec.op) continue;
 
-        // these should also set the type but ChkResult makes them none?
+        if(lhs == Type::NONE || rhs == Type::NONE) break;
+
+        bool badTypes = false;
+        if(lhsRaw != spec.type){
+            badTypes = true;
+            errors.push_back(Errors::incorrectLHS(e->token, lhs, spec.type));
+        }
+        if(rhsRaw != spec.type){
+            badTypes = true;
+            errors.push_back(Errors::incorrectRHS(e->token, rhs, spec.type));
+        }
+        if(!badTypes && (lhsRaw != rhsRaw)){
+            errors.push_back(Errors::mismatchedLR(e->token, lhs, rhs));
+        }
         if(lhs.isArray() || rhs.isArray()){
-            return ChkResult(Errors::opDoesntAcceptArrays(e->token));
+            errors.push_back(Errors::opDoesntAcceptArrays(e->token));
         }
-        if(lhs != spec.type){
-            return ChkResult(Errors::incorrectLHS(e->token, lhs, spec.type.toString()));
-        }
-        if(rhs != spec.type){
-            return ChkResult(Errors::incorrectRHS(e->token, rhs, spec.type.toString()));
-        }
-        if(rhs != rhs){
-            return ChkResult(Errors::mismatchedLR(e->token, lhs, rhs));
-        }
-        return ChkResult(spec.type);
     }
 
-    //assignment
-    if(lhs.isArray() || rhs.isArray()){
-        return ChkResult(Errors::opDoesntAcceptArrays(e->token));
-    }
-    if(lhs != rhs){
-        return ChkResult(Errors::mismatchedLR(e->token, lhs, rhs));
-    }
+    if((op == '=' || op == EQ || op == NOTEQ) &&
+        !(lhs == Type::NONE || rhs == Type::NONE)){
 
-    return ChkResult(lhs);*/
+        bool badTypes = false;
+        if(lhsRaw == Type::VOID){
+            badTypes = true;
+            errors.push_back(Errors::incorrectLHS(e->token, lhs, "NONVOID"));
+        }
+        if(rhsRaw == Type::VOID){
+            badTypes = true;
+            errors.push_back(Errors::incorrectRHS(e->token, rhs, "NONVOID"));
+        }
+
+        if(!badTypes && (lhsRaw != rhsRaw)){
+            errors.push_back(Errors::mismatchedLR(e->token, lhs, rhs));
+        }
+    }
 
 /*
     '[' -> indexing

@@ -27,25 +27,37 @@ Error* Errors::cannotBeCalled(const Token* t){
 Error* Errors::incorrectLHS(const Token* t, Type found, std::string required){
     rtnErr(t->line,
         "\'"<<t->text<<"\' requires operands of "<<required
-            <<" but lhs is of " << found << "."
+            <<" but lhs is of type " << found.rawString() << "."
+    );
+}
+Error* Errors::incorrectLHS(const Token* t, Type found, Type required){
+    rtnErr(t->line,
+        "\'"<<t->text<<"\' requires operands of type "<<required
+            <<" but lhs is of type " << found.rawString() << "."
     );
 }
 Error* Errors::incorrectRHS(const Token* t, Type found, std::string required){
     rtnErr(t->line,
         "\'"<<t->text<<"\' requires operands of "<<required
-            <<" but rhs is of " << found << "."
+            <<" but rhs is of type " << found.rawString() << "."
+    );
+}
+Error* Errors::incorrectRHS(const Token* t, Type found, Type required){
+    rtnErr(t->line,
+        "\'"<<t->text<<"\' requires operands of type "<<required
+            <<" but rhs is of type " << found.rawString() << "."
     );
 }
 Error* Errors::mismatchedLR(const Token* t, Type lhs, Type rhs){
     rtnErr(t->line,
-        "\'"<<t->text<<"\' requires operands of the same type but lhs is "
-            <<lhs<<" and rhs is "<<rhs<<"."
+        "\'"<<t->text<<"\' requires operands of the same type but lhs is type "
+            <<lhs.rawString()<<" and rhs is type "<<rhs.rawString()<<"."
     );
 }
 Error* Errors::badArrayIndex(const Token* t, Type received){
     rtnErr(t->line,
         "Array \'"<<t->text<<"\' should be indexed by type int but got type "
-            <<received<<"."
+            <<received.rawString()<<"."
     );
 }
 Error* Errors::arrayIndexedByArray(const Token* t){
@@ -91,8 +103,8 @@ Error* Errors::opOnlyAcceptsArrays(const Token* op){
 }
 Error* Errors::unaryTypeMismatch(const Token* op, Type found, Type required){
     rtnErr(op->line,
-        "Unary \'"<<op->text<<"\' requires an operand of type "<<required
-            << " but was given " << found;
+        "Unary \'"<<op->text<<"\' requires an operand of type type "<<required.rawString()
+            << " but was given type " << found.rawString() << ".";
     );
 }
 Error* Errors::missingMainFunction(){

@@ -27,6 +27,9 @@ public:
             return NULL;
         }
     }
+    bool lookupLocal(std::string name){
+        return (values[name] != NULL);
+    }
     bool add(std::string name, AST::Node* value){
         AST::Node* existing = values[name];
         if(existing == NULL){
@@ -76,6 +79,12 @@ public:
      */
     AST::Node* lookup(std::string name){
         return table->lookup(name);
+    }
+    /**
+     * Returns if a node is associated with `name` in the local scope
+     */
+    bool lookupLocal(std::string name){
+        return table->lookupLocal(name);
     }
     /**
      * Adds a (name,value) pair to this scope
