@@ -28,6 +28,7 @@ CPPS := $(shell find $(SDIR) -name "*.cpp" -not -samefile "$(MAIN)") \
 HPPS := $(shell find $(SDIR) -name "*.hpp")
 TESTS:= $(shell find $(TDIR) -name "*.cpp")
 OBJS := $(addprefix $(ODIR)/,$(notdir $(CPPS:.cpp=.o)))
+TOBJS:= $(addprefix $(ODIR)/,$(notdir $(TESTS:.cpp=.o)))
 INC  := -I$(SDIR) -I$(ODIR)
 
 FLEX := $(SDIR)/parser.l
@@ -41,9 +42,12 @@ run: $(EXECUTABLE)
 init:
 	mkdir -p $(ODIR)
 
-test: init $(OBJS) $(TESTS)
-	$(CC) $(TESTFLAGS) $(TESTS) $(INC) $(TESTLIB) $(OBJS) -o $(TESTCMD)
+test: init $(TOBJS) $(TESTS)
+	$(CC) $(TESTFLAGS) $(INC) $(OBJS) $(TOBJS) $(TESTLIB) -o $(TESTCMD)
 	./$(TESTCMD)
+
+$(ODIR)/%.o: $(TDIR)/%.cpp $(OBJS)
+	$(CC) $(TESTFLAGS) $(INC) $(TESTLIB) -c -o $@ $<
 
 tar: test
 	tar -cf $(OUTPUTTAR) ./makefile ./src
