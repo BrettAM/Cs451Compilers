@@ -27,13 +27,11 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
                     }
                 } break;
                 /**
-                 * Enter declarations into the symbol table, logging errors for
-                 *   duplicate declarations as we go.
-                 * If its a function declaration, Make a new scope and flag that
+                 * For function declarations, add to the symbol table,
+                 *   then make a new scope and flag that
                  *   a compound immediatly following should not enter a new
                  *   scope.
                  */
-                case DECLARATION:
                 case FUNCTIONDECL:{
                     string id = e->token->text;
                     bool success = table.add(id, e);
@@ -42,10 +40,8 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
                         errors.push_back(Errors::alreadyDefined(e->token,line));
                     }
 
-                    if(e->nodeType == FUNCTIONDECL){
-                        prevEnterWasFunc = true;
-                        table.enter(n);
-                    }
+                    prevEnterWasFunc = true;
+                    table.enter(n);
                 } break;
                 default:
                     break;
@@ -63,6 +59,17 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
 
             Type resultType = Type::NONE;
             switch(e->nodeType){
+                /**
+                 * After the initializer list has been run, add a declaration
+                 */
+                case DECLARATION:{
+                    string id = e->token->text;
+                    bool success = table.add(id, e);
+                    if(!success) {
+                        int line = table.lookup(id)->token->line;
+                        errors.push_back(Errors::alreadyDefined(e->token,line));
+                    }
+                } break;
                 /**
                  * Check the symbol table for a value's current type.
                  * Constants are already tagged with a type so ignore them.
@@ -315,6 +322,10 @@ Type Semantics::checkOperands(Node* opNode, vector<Error*>& errors){
     RETURN
 */
 
+    //"ERROR(%d): Unary '%s' requires an operand of type %s but was given %s.\n"
+    //"ERROR(%d): The operation '%s' does not work with arrays.\n"
+    //"ERROR(%d): The operation '%s' only works with arrays.\n"
+    // '%s' requires operands of the same type but lhs is _ and rhs in _
 
     typedef struct ResultType{
         int op;

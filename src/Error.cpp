@@ -44,7 +44,7 @@ Error* Errors::mismatchedLR(const Token* t, Type lhs, Type rhs){
 }
 Error* Errors::badArrayIndex(const Token* t, Type received){
     rtnErr(t->line,
-        "Array \'"<<t->text<<"\' should be indexed by type int but got "
+        "Array \'"<<t->text<<"\' should be indexed by type int but got type "
             <<received<<"."
     );
 }

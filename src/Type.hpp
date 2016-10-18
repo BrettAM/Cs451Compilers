@@ -34,11 +34,7 @@ public:
         return Type(raw, false, false, true);
     }
     Type returnType() const {
-        if(_func || _array){
-            return Type(raw, false, false, false);
-        } else {
-            return NONE;
-        }
+        return Type(raw, false, false, false);
     }
     /**
      * Get a version of this type representing its runtime meaning
@@ -58,10 +54,8 @@ public:
      */
     std::string predicate() const {
         std::ostringstream oss;
-        if(_array || _static){
-            oss << " is";
-            if(_static) oss << " static";
-            if(_array) oss << " array";
+        if(_array){
+            oss << " is array";
         }
         oss << " of type " << raw;
         return oss.str();

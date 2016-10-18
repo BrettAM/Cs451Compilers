@@ -180,7 +180,9 @@ Node* AST::ReturnNode(const Token* t, Node* expr){
 }
 Node* AST::BreakNode(const Token* t){
     static LabelPrinter printer("Break");
-    return new Element(CONTROL, &printer, t, listof<Node*>());
+    Element* e = new Element(CONTROL, &printer, t, listof<Node*>());
+    e->type = Type::VOID;
+    return e;
 }
 Node* AST::Siblings(std::vector<Node*> sibs){
     // empty sibling lists should be omitted from the tree
