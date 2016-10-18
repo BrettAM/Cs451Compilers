@@ -15,8 +15,8 @@ private:
     int32_t lineno;
     std::string description;
 public:
-    static const int32_t SYNTAX = -1;
-    static const int32_t LINKER = INT32_MAX;
+    static const int32_t SYNTAX = -2;
+    static const int32_t LINKER = -1;
     Error(int32_t line, std::string description)
         : lineno(line), description(description){}
     std::string toString() const {
