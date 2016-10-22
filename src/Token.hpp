@@ -11,13 +11,14 @@
 
 class Token {
 public:
-    Token(int token, int line, std::string str):
-        token(token), line(line), text(str) {}
-    Token(int token, int line, cstr str):
-        token(token), line(line), text(str) {}
+    Token(int token, int line, int index, std::string str):
+        token(token), line(line), index(index), text(str) {}
+    Token(int token, int line, int index, cstr str):
+        token(token), line(line), index(index), text(str) {}
     virtual ~Token() {}
     const int token;
     const int line;
+    const int index;
     const std::string text;
     /**
      * Text description of this token
@@ -52,7 +53,7 @@ public:
     }
 protected:
     virtual bool equals(const Token& t) const {
-        return token==t.token && line==t.line && text==t.text;
+        return token==t.token && line==t.line && index==t.index && text==t.text;
     }
 };
 std::ostream& operator<<(std::ostream&, const Token&);
@@ -61,8 +62,8 @@ std::ostream& operator<<(std::ostream&, const Token*);
 class CharConst : public Token {
 public:
     const char literal;
-    CharConst(int token, int line, cstr str):
-        Token(token, line, str), literal(TextUtils::unescape(str+1)) {}
+    CharConst(int token, int line, int index, cstr str):
+        Token(token, line, index, str), literal(TextUtils::unescape(str+1)) {}
     std::string toString() const {
         std::ostringstream oss;
         oss << "Line " << line << " Token: CHARCONST Value: \'" << literal
@@ -88,8 +89,8 @@ protected:
 class NumConst : public Token {
 public:
     const int32_t value;
-    NumConst(int token, int line, cstr str):
-        Token(token, line, str), value(atoi(str)) {}
+    NumConst(int token, int line, int index, cstr str):
+        Token(token, line, index, str), value(atoi(str)) {}
     std::string toString() const {
         std::ostringstream oss;
         oss << "Line " << line << " Token: NUMCONST Value: " << value
@@ -113,8 +114,8 @@ private:
     static bool atob(cstr str){ return (str[0]=='t'); }
 public:
     const bool value;
-    BoolConst(int token, int line, cstr str):
-        Token(token, line, str), value(atob(str)) {}
+    BoolConst(int token, int line, int index, cstr str):
+        Token(token, line, index, str), value(atob(str)) {}
     std::string toString() const {
         std::ostringstream oss;
         oss << "Line " << line << " Token: BOOLCONST Value: " << value
@@ -135,8 +136,8 @@ protected:
 
 class IdToken : public Token {
 public:
-    IdToken(int token, int line, cstr str):
-        Token(token, line, str) {}
+    IdToken(int token, int line, int index, cstr str):
+        Token(token, line, index, str) {}
     std::string toString() const {
         std::ostringstream oss;
         oss << "Line " << line << " Token: ID Value: " << text;
@@ -153,8 +154,8 @@ protected:
 
 class Invalid : public Token {
 public:
-    Invalid(int token, int line, cstr str):
-        Token(token, line, str) {}
+    Invalid(int token, int line, int index, cstr str):
+        Token(token, line, index, str) {}
     std::string toString() const {
         std::ostringstream oss;
         oss << "ERROR(" << line << "): Invalid or misplaced input character: \""

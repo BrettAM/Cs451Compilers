@@ -42,12 +42,14 @@ namespace { // file local namespace
     AST::Node* ASTroot;
     map<string,const Token *> globs;
     Error* error;
+    int tokenIndex;
 
     void setup(){
         tokenList = new std::vector<const Token*>();
         globs = map<string,const Token *>();
         ASTroot = NULL;
         error = NULL;
+        tokenIndex = 0;
     }
 
     Result teardown(){
@@ -69,6 +71,11 @@ int ParseDriver::pushToken(const Token* t){
     return t->token;
 }
 
+int ParseDriver::tIdx(){
+    tokenIndex++;
+    return tokenIndex;
+}
+
 void ParseDriver::rootAST(Node * AST){
     ASTroot = AST;
 }
@@ -76,7 +83,7 @@ void ParseDriver::rootAST(Node * AST){
 void ParseDriver::pushError(const char * msg){
     std::ostringstream oss;
     oss << msg << " on line " << yylineno;
-    error = new Error(Error::SYNTAX, oss.str());
+    error = new Error(Error::SYNTAX, 0, oss.str());
 }
 
 void ParseDriver::pushGlobal(const Token* record){

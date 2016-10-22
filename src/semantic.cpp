@@ -131,7 +131,10 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
         analyzer.errors.push_back(Errors::missingMainFunction());
     }
 
-    return analyzer.errors;
+    vector<Error*>& errors = analyzer.errors;
+    std::stable_sort(errors.begin(), errors.end(), Errors::compare);
+
+    return errors;
 }
 Type Semantics::checkCall(Node* call, Node* f, vector<Error*>& errors){
     Element* function = dynamic_cast<Element *>(f);
@@ -173,10 +176,7 @@ Type Semantics::checkOperands(Node* opNode, vector<Error*>& errors){
     //"ERROR(%d): Array '%s' should be indexed by type int but got %s.\n"
     if(op == '[') {
         if(!lhs.isArray()) {
-            errors.push_back((lhNode->nodeType == VALUE)
-                ? Errors::cannotIndexNonarray(lhNode->token)
-                : Errors::cannotIndexNonarray(lhNode->token->line)
-                );
+            errors.push_back(Errors::cannotIndexNonarray(lhNode->token));
         }
 
         if(rhsRaw != Type::INT && rhsRaw != Type::NONE){

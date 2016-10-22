@@ -40,6 +40,10 @@ namespace ParseDriver {
      */
     int pushToken(const Token* t);
     /**
+     * Return a unique, monotonically increasing index for a token
+     */
+    int tIdx();
+    /**
      * Interface for bison to return the final AST
      */
     void rootAST(AST::Node * AST);

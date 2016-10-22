@@ -17,43 +17,44 @@ using namespace ParseDriver;
 
 %%
 
-"return"         { setlval(new Token(RETURN, yylineno, yytext)); }
-"static"         { setlval(new Token(STATIC, yylineno, yytext)); }
-"int"            { setlval(new Token(INT, yylineno, yytext)); }
-"bool"           { setlval(new Token(BOOL, yylineno, yytext)); }
-"char"           { setlval(new Token(CHAR, yylineno, yytext)); }
-"if"             { setlval(new Token(IF, yylineno, yytext)); }
-"else"           { setlval(new Token(ELSE, yylineno, yytext)); }
-"while"          { setlval(new Token(WHILE, yylineno, yytext)); }
-"break"          { setlval(new Token(BREAK, yylineno, yytext)); }
-"record"         { setlval(new Token(RECORD, yylineno, yytext)); }
-"!="             { setlval(new Token(NOTEQ, yylineno, yytext)); }
-"*="             { setlval(new Token(MULASS, yylineno, yytext)); }
-"++"             { setlval(new Token(INC, yylineno, yytext)); }
-"+="             { setlval(new Token(ADDASS, yylineno, yytext)); }
-"--"             { setlval(new Token(DEC, yylineno, yytext)); }
-"-="             { setlval(new Token(SUBASS, yylineno, yytext)); }
-"/="             { setlval(new Token(DIVASS, yylineno, yytext)); }
-"<="             { setlval(new Token(LESSEQ, yylineno, yytext)); }
-"=="             { setlval(new Token(EQ, yylineno, yytext)); }
-">="             { setlval(new Token(GRTEQ, yylineno, yytext)); }
-"not"            { setlval(new Token(NOT, yylineno, yytext)); }
-"and"            { setlval(new Token(AND, yylineno, yytext)); }
-"or"             { setlval(new Token(OR, yylineno, yytext)); }
-("true"|"false") { setlval(new BoolConst(BOOLCONST, yylineno, yytext)); }
+"return"         { setlval(new Token(RETURN, yylineno, tIdx(), yytext)); }
+"static"         { setlval(new Token(STATIC, yylineno, tIdx(), yytext)); }
+"int"            { setlval(new Token(INT, yylineno, tIdx(), yytext)); }
+"bool"           { setlval(new Token(BOOL, yylineno, tIdx(), yytext)); }
+"char"           { setlval(new Token(CHAR, yylineno, tIdx(), yytext)); }
+"if"             { setlval(new Token(IF, yylineno, tIdx(), yytext)); }
+"else"           { setlval(new Token(ELSE, yylineno, tIdx(), yytext)); }
+"while"          { setlval(new Token(WHILE, yylineno, tIdx(), yytext)); }
+"break"          { setlval(new Token(BREAK, yylineno, tIdx(), yytext)); }
+"record"         { setlval(new Token(RECORD, yylineno, tIdx(), yytext)); }
+"!="             { setlval(new Token(NOTEQ, yylineno, tIdx(), yytext)); }
+"*="             { setlval(new Token(MULASS, yylineno, tIdx(), yytext)); }
+"++"             { setlval(new Token(INC, yylineno, tIdx(), yytext)); }
+"+="             { setlval(new Token(ADDASS, yylineno, tIdx(), yytext)); }
+"--"             { setlval(new Token(DEC, yylineno, tIdx(), yytext)); }
+"-="             { setlval(new Token(SUBASS, yylineno, tIdx(), yytext)); }
+"/="             { setlval(new Token(DIVASS, yylineno, tIdx(), yytext)); }
+"<="             { setlval(new Token(LESSEQ, yylineno, tIdx(), yytext)); }
+"=="             { setlval(new Token(EQ, yylineno, tIdx(), yytext)); }
+">="             { setlval(new Token(GRTEQ, yylineno, tIdx(), yytext)); }
+"not"            { setlval(new Token(NOT, yylineno, tIdx(), yytext)); }
+"and"            { setlval(new Token(AND, yylineno, tIdx(), yytext)); }
+"or"             { setlval(new Token(OR, yylineno, tIdx(), yytext)); }
+("true"|"false") { setlval(new BoolConst(BOOLCONST, yylineno, tIdx(), yytext)); }
 [\(\)\[\]\{\}\;\=\<\>\+\-\*\/\%\?\.\,\:] {
-                   setlval(new Token(yytext[0], yylineno, yytext)); }
-\'(.|\\.)\'      { setlval(new CharConst(CHARCONST, yylineno, yytext)); }
-[0-9]+           { setlval(new NumConst(NUMCONST, yylineno, yytext)); }
+                   setlval(new Token(yytext[0], yylineno, tIdx(), yytext)); }
+\'(.|\\.)\'      { setlval(new CharConst(CHARCONST, yylineno, tIdx(), yytext)); }
+[0-9]+           { setlval(new NumConst(NUMCONST, yylineno, tIdx(), yytext)); }
 [a-zA-Z][a-zA-Z0-9]* {
                    yylval.idToken = new IdToken(
                        isRecord(yytext)? RECTYPE : ID,
                        yylineno,
+                       tIdx(),
                        yytext);
                    return pushToken(yylval.idToken);
                  }
 ([\n\t ]*)|([\/]{2}.*) {
                    /* ignored whitespace characters */; }
-.                { pushToken(new Invalid(MISPLACED, yylineno, yytext)); }
+.                { pushToken(new Invalid(MISPLACED, yylineno, tIdx(), yytext)); }
 
 %%
