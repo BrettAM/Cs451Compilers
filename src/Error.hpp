@@ -9,6 +9,7 @@
 
 #include "Token.hpp"
 #include "Type.hpp"
+#include "ParseDefines.hpp"
 
 class Error{
 private:
@@ -44,7 +45,6 @@ namespace Errors{
     Error* badArrayIndex(const Token* t, Type received);
     Error* arrayIndexedByArray(const Token* t);
     Error* cannotIndexNonarray(const Token* t);
-    Error* cannotIndexNonarray(int lineno);
     Error* cannotReturnArray(const Token* t);
     Error* functionUsedAsVar(const Token* func);
     Error* alreadyDefined(const Token* t, int previousLine);

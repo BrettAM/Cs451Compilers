@@ -66,12 +66,11 @@ Error* Errors::arrayIndexedByArray(const Token* t){
     );
 }
 Error* Errors::cannotIndexNonarray(const Token* t){
-    rtnErr(t->line,
-        "Cannot index nonarray \'"<<t->text<<"\'."
-    );
-}
-Error* Errors::cannotIndexNonarray(int lineno){
-    rtnErr(lineno, "Cannot index nonarray.");
+    if(t->token == ID){
+        rtnErr(t->line, "Cannot index nonarray \'"<<t->text<<"\'.");
+    } else {
+        rtnErr(t->line, "Cannot index nonarray.");
+    }
 }
 Error* Errors::cannotReturnArray(const Token* t){
     rtnErr(t->line, "Cannot return an array.");
