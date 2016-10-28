@@ -57,10 +57,12 @@ namespace ParseDriver {
      * Run a flex/bison pass over an input string
      */
     Result run(const char* str);
+    Result run(const char* str, int startLineNumber);
     /**
      * Run a flex/bison pass over the contents of a file
      */
     Result run(FILE* f);
+    Result run(FILE* f, int startLineNumber);
     /**
      * Enable debugging details in flex and bison
      */

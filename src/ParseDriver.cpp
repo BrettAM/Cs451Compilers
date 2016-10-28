@@ -92,12 +92,15 @@ void ParseDriver::enableDebug(){
 }
 
 Result ParseDriver::run(const char* str){
+    return ParseDriver::run(str, 1);
+}
+Result ParseDriver::run(const char* str, int startLineNumber){
     YY_BUFFER_STATE buf = yy_scan_string(str);
 
     setup();
 
     yy_switch_to_buffer(buf);
-    yylineno = 1;
+    yylineno = startLineNumber;
     yyparse();
     yy_delete_buffer(buf);
 
@@ -105,9 +108,12 @@ Result ParseDriver::run(const char* str){
 }
 
 Result ParseDriver::run(FILE* f){
+    return ParseDriver::run(f, 1);
+}
+Result ParseDriver::run(FILE* f, int startLineNumber){
     setup();
 
-    yylineno = 1;
+    yylineno = startLineNumber;
     yyin = f;
     yyparse();
 
