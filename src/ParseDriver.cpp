@@ -141,11 +141,11 @@ void ParseDriver::Result::cleanup(){
  */
 const Source ParseDriver::Source::IOLibrary(
     "int input();"
-    "output(int dummy);"
+    "output(int *dummy*);"
     "bool inputb();"
-    "outputb(bool dummy);"
+    "outputb(bool *dummy*);"
     "char inputc();"
-    "outputc(char dummy);"
+    "outputc(char *dummy*);"
     "outnl();"
     ,-1
 );

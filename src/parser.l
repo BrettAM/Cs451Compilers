@@ -45,7 +45,7 @@ using namespace ParseDriver;
                    setlval(new Token(yytext[0], yylineno, yytext)); }
 \'(.|\\.)\'      { setlval(new CharConst(CHARCONST, yylineno, yytext)); }
 [0-9]+           { setlval(new NumConst(NUMCONST, yylineno, yytext)); }
-[a-zA-Z][a-zA-Z0-9]* {
+([a-zA-Z][a-zA-Z0-9]*|\*dummy\*) {
                    yylval.idToken = new IdToken(
                        isRecord(yytext)? RECTYPE : ID,
                        yylineno,
