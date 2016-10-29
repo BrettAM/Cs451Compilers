@@ -9,6 +9,11 @@ extern YY_BUFFER_STATE yy_scan_string(const char * str);
 extern YY_BUFFER_STATE yy_create_buffer ( FILE *file, int size );
 extern void yy_switch_to_buffer ( YY_BUFFER_STATE new_buffer );
 extern void yy_delete_buffer(YY_BUFFER_STATE buffer);
+extern void yypush_buffer_state(YY_BUFFER_STATE buffer);
+extern void yypop_buffer_state();
+
+// Default file buffer size for flex is 16k
+size_t YY_BUF_SIZE = 0x4000;
 
 using namespace ParseDriver;
 using namespace AST;
@@ -91,31 +96,53 @@ void ParseDriver::enableDebug(){
     yydebug = 1;
 }
 
-Result ParseDriver::run(const char* str){
-    return ParseDriver::run(str, 1);
+Result ParseDriver::run(Source source){
+    return ParseDriver::run(listof<Source>() << source);
 }
-Result ParseDriver::run(const char* str, int startLineNumber){
-    YY_BUFFER_STATE buf = yy_scan_string(str);
 
+Result ParseDriver::run(std::vector<Source> sources){
     setup();
 
-    yy_switch_to_buffer(buf);
-    yylineno = startLineNumber;
-    yyparse();
-    yy_delete_buffer(buf);
+    listof<Node*> fullChildList;
+    for(size_t i=0; i<sources.size(); i++){
+        // parse the next source
+        Source& source = sources[i];
+        yylineno = source.lineStart;
+
+        YY_BUFFER_STATE buf =
+            (source.type == Source::DISK)
+                ? yy_create_buffer(source.file, YY_BUF_SIZE)
+                : yy_scan_string(source.str);
+
+        yy_switch_to_buffer(buf);
+        yyparse();
+        yy_delete_buffer(buf);
+
+        // log results
+        if(ASTroot != NULL){
+            fullChildList.addAll(ASTroot->viewChildren());
+            delete ASTroot;
+            ASTroot = NULL;
+        }
+    }
+
+    ASTroot = Siblings(fullChildList);
 
     return teardown();
 }
 
-Result ParseDriver::run(FILE* f){
-    return ParseDriver::run(f, 1);
-}
-Result ParseDriver::run(FILE* f, int startLineNumber){
-    setup();
-
-    yylineno = startLineNumber;
-    yyin = f;
-    yyparse();
-
-    return teardown();
-}
+/**
+ * A list of prototypes for builtin IO calls in c-
+ * They should be listed without newlines so that they all appear
+ *   as being defined on line -1
+ */
+const Source ParseDriver::Source::IOLibrary(
+    "output(int i);"
+    "outputb(bool b);"
+    "outputc(char c);"
+    "outnl();"
+    "int input() return 0;"
+    "bool inputb() return false;"
+    "char inputc() return ' ';",
+    -1
+);

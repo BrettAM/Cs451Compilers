@@ -4,7 +4,10 @@
 #include "ParseDriver.hpp"
 #include "Error.hpp"
 #include "semantic.hpp"
+#include "AST.hpp"
+
 using namespace std;
+using namespace ParseDriver;
 
 int main(int argc, char *argv[]) {
     bool printTree = false, printTypedTree = false;
@@ -36,7 +39,8 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    ParseDriver::Result r = ParseDriver::run(input);
+    Result r = ParseDriver::run(
+        AST::listof<Source>() << Source::IOLibrary << input);
     vector<Error*> errors = Semantics::analyze(r.getAST());
 
     //syntax error

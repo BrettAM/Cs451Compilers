@@ -54,15 +54,28 @@ namespace ParseDriver {
 
     ///////// functions below for use by the compiler ///////////
     /**
-     * Run a flex/bison pass over an input string
+     * POD class containing the specification for a code source buffer
      */
-    Result run(const char* str);
-    Result run(const char* str, int startLineNumber);
+    class Source{
+    public:
+        static const Source IOLibrary;
+        union { const char* str; FILE* file; };
+        enum Type { STRING, DISK } type;
+        int lineStart;
+        Source(const char* str):
+            str(str), type(STRING), lineStart(1) {}
+        Source(const char* str, int lineno):
+            str(str), type(STRING), lineStart(lineno) {}
+        Source(FILE* f):
+            file(f), type(DISK), lineStart(1) {}
+        Source(FILE* f, int lineno):
+            file(f), type(DISK), lineStart(lineno) {}
+    };
     /**
-     * Run a flex/bison pass over the contents of a file
+     * Run a flex/bison pass over Source or sequence of Sources
      */
-    Result run(FILE* f);
-    Result run(FILE* f, int startLineNumber);
+    Result run(Source source);
+    Result run(std::vector<Source> sources);
     /**
      * Enable debugging details in flex and bison
      */

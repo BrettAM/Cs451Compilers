@@ -22,8 +22,14 @@ namespace AST{
             return this;
         }
         listof<T>* addAll(listof<T>* other){
-            for(int i=0; i<other->list.size(); i++){
+            for(size_t i=0; i<other->list.size(); i++){
                 list.push_back(other->list.at(i));
+            }
+            return this;
+        }
+        listof<T>* addAll(const std::vector<T>* const other){
+            for(size_t i=0; i<other->size(); i++){
+                list.push_back(other->at(i));
             }
             return this;
         }
@@ -120,6 +126,9 @@ namespace AST{
         Node* getChild(size_t i){
             if(i < 0 || i >= children.size()) return NULL;
             return children[i];
+        }
+        const std::vector<Node*>* const viewChildren(){
+            return &children;
         }
     protected:
         std::vector<Node*> children;
