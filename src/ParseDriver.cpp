@@ -19,33 +19,10 @@ using namespace ParseDriver;
 using namespace AST;
 using namespace std;
 
-void ParseDriver::Result::cleanup(){
-    // free all the tokens
-    for(std::vector<const Token*>::iterator itr = tokens->begin();
-            itr!= tokens->end();
-            ++itr){
-        delete (*itr);
-    }
-    delete tokens;
-    tokens = NULL;
-
-    // free error pointer
-    if(error != NULL){
-        delete error;
-        error = NULL;
-    }
-
-    // free all the tree nodes
-    if(AST != NULL) {
-        AST->deleteTree();
-        AST = NULL;
-    }
-}
-
 namespace { // file local namespace
     std::vector<const Token*>* tokenList;
-    AST::Node* ASTroot;
     map<string,const Token *> globs;
+    AST::Node* ASTroot;
     Error* error;
 
     void setup(){
@@ -55,17 +32,11 @@ namespace { // file local namespace
         error = NULL;
     }
 
-    Result teardown(){
-        Result result = Result(
-                tokenList,
-                (ASTroot!=NULL) ? ASTroot : Siblings(listof<Node*>()),
-                error
-            );
-        // ownership of these pointers passed to result;
+    void teardown(){
         tokenList = NULL;
+        globs.clear();
         ASTroot = NULL;
         error = NULL;
-        return result;
     }
 }
 
@@ -103,6 +74,11 @@ Result ParseDriver::run(Source source){
 Result ParseDriver::run(std::vector<Source> sources){
     setup();
 
+    // Each successfully compiled source produces an abstract syntax tree
+    //   rooted with a sibling node. This code iterates through sources,
+    //   taking all the root sibling's children and adding them to a new
+    //   sibling list encompasing the entire program.
+
     listof<Node*> fullChildList;
     for(size_t i=0; i<sources.size(); i++){
         // parse the next source
@@ -123,12 +99,39 @@ Result ParseDriver::run(std::vector<Source> sources){
             fullChildList.addAll(ASTroot->viewChildren());
             delete ASTroot;
             ASTroot = NULL;
+        } else {
+            break; // syntax error
         }
     }
 
-    ASTroot = Siblings(fullChildList);
+    Node* root = Siblings(fullChildList);
+    Result result = Result(tokenList, root, error);
 
-    return teardown();
+    teardown();
+    return result;
+}
+
+void ParseDriver::Result::cleanup(){
+    // free all the tokens
+    for(std::vector<const Token*>::iterator itr = tokens->begin();
+            itr!= tokens->end();
+            ++itr){
+        delete (*itr);
+    }
+    delete tokens;
+    tokens = NULL;
+
+    // free error pointer
+    if(error != NULL){
+        delete error;
+        error = NULL;
+    }
+
+    // free all the tree nodes
+    if(AST != NULL) {
+        AST->deleteTree();
+        AST = NULL;
+    }
 }
 
 /**
@@ -137,12 +140,12 @@ Result ParseDriver::run(std::vector<Source> sources){
  *   as being defined on line -1
  */
 const Source ParseDriver::Source::IOLibrary(
-    "output(int i);"
-    "outputb(bool b);"
-    "outputc(char c);"
+    "int input();"
+    "output(int dummy);"
+    "bool inputb();"
+    "outputb(bool dummy);"
+    "char inputc();"
+    "outputc(char dummy);"
     "outnl();"
-    "int input() return 0;"
-    "bool inputb() return false;"
-    "char inputc() return ' ';",
-    -1
+    ,-1
 );
