@@ -53,6 +53,20 @@ namespace Errors{
     Error* opOnlyAcceptsArrays(const Token* op);
     Error* unaryTypeMismatch(const Token* op, Type found, Type required);
     Error* missingMainFunction();
+    Error* arrayUsedAsTest(const Token* t);
+    Error* badTestType(const Token* t, Type found);
+    Error* mismatchedArrayStatus(const Token* t);
+    Error* nonconstInitializer(const Token* t);
+    Error* badInitializerType(const Token* t, Type found, Type expected);
+    Error* missingReturnStatement(const Token* t, Type found);
+    Error* badReturnValue(const Token* t, const Token* function, Type found, Type expected);
+    Error* breakOutsideLoop(const Token* t);
+    Error* tooFewParameters(const Token* call, const Token* function);
+    Error* badParameterType(const Token* t, Type found, Type expected, int parmIndex, const Token* function);
+    Error* expectedArrayParameter(const Token* t, int parmIndex, const Token* function);
+    Error* unexpectedArrayParameter(const Token* t, int parmIndex, const Token* function);
+    Error* tooManyParameters(const Token* t, const Token* function);
+    Error* undefinedFunction(const Token* t);
 }
 
 #endif

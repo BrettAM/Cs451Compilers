@@ -102,10 +102,112 @@ Error* Errors::opOnlyAcceptsArrays(const Token* op){
 }
 Error* Errors::unaryTypeMismatch(const Token* op, Type found, Type required){
     rtnErr(op->line,
-        "Unary \'"<<op->text<<"\' requires an operand of type type "<<required.rawString()
+        "Unary \'"<<op->text<<"\' requires an operand of type "<<required.rawString()
             << " but was given type " << found.rawString() << ".";
     );
 }
 Error* Errors::missingMainFunction(){
     return new Error(Error::LINKER,"Procedure main is not defined.");
+}
+Error* Errors::arrayUsedAsTest(const Token* t){
+    rtnErr(t->line,
+        "Cannot use array as test condition in " << t->text << " statement.";
+    );
+}
+Error* Errors::badTestType(const Token* t, Type found){
+    rtnErr(t->line,
+        "Expecting Boolean test condition in " << t->text << " statement but got " << found.rawString() << ".";
+    );
+}
+Error* Errors::mismatchedArrayStatus(const Token* t){
+    rtnErr(t->line,
+        t->text << "  requires that either both or neither operands be arrays.";
+    );
+}
+Error* Errors::nonconstInitializer(const Token* t){
+    rtnErr(t->line,
+        "Initializer for variable '"<< t->text <<"' is not a constant expression.";
+    );
+}
+Error* Errors::badInitializerType(const Token* t, Type found, Type expected){
+    rtnErr(t->line,
+        "Variable '"<<t->text<<"' is of "<<expected.rawString()<<
+        " but is being initialized with an expression of "<<
+        found.rawString()<< ".";
+    );
+}
+Error* Errors::missingReturnStatement(const Token* t, Type found){
+    rtnErr(t->line,
+        "Expecting to return "<<found.rawString()<<" but function '"<<
+        t->text<<"' has no return statement.";
+    );
+}
+Error* Errors::badReturnValue(const Token* t, const Token* function, Type found, Type expected){
+    if(expected == Type::VOID){
+        rtnErr(t->line,
+            "Function '"<<
+            function->text<<"' at line "<<
+            function->line<<" is expecting no return value, but return has return value.";
+        );
+    } else if (found == Type::VOID){
+        rtnErr(t->line,
+            "Function '"<<
+            function->text<<"' at line "<<
+            function->line<<" is expecting to return "<<
+            expected.rawString()<<" but return has no return value.";
+        );
+    }
+    rtnErr(t->line,
+        "Function '"<<
+        function->text<<"' at line "<<
+        function->line<<" is expecting to return "<<
+        expected.rawString()<<" but instead returns "<<
+        found.rawString()<<".";
+    );
+}
+Error* Errors::breakOutsideLoop(const Token* t){
+    rtnErr(t->line,
+        "Cannot have a break statement outside of loop.";
+    );
+}
+Error* Errors::tooFewParameters(const Token* call, const Token* function){
+    rtnErr(call->line,
+        "Too few parameters passed for function '"<<function->text<<
+        "' defined on line "<< function->line <<".";
+    );
+}
+Error* Errors::badParameterType(const Token* t, Type found, Type expected, int parmIndex, const Token* function){
+    rtnErr(t->line,
+        "Expecting "<< expected.rawString()<<
+        " in parameter "<< parmIndex <<
+        " of call to '"<< function->text <<
+        "' defined on line "<< function->line <<" but got "<<
+        found.rawString() <<".";
+    );
+}
+Error* Errors::expectedArrayParameter(const Token* t, int parmIndex, const Token* function){
+    rtnErr(t->line,
+        "Expecting array in parameter "<<parmIndex<<
+        " of call to '"<< function->text <<
+        "' defined on line "<< function->line <<".";
+    );
+}
+Error* Errors::unexpectedArrayParameter(const Token* t, int parmIndex, const Token* function){
+    rtnErr(t->line,
+        "Not expecting array in parameter "<<
+        parmIndex <<" of call to '"<<
+        function->text <<"' defined on line "<<
+        function->line <<".";
+    );
+}
+Error* Errors::tooManyParameters(const Token* t, const Token* function){
+    rtnErr(t->line,
+        "Too many parameters passed for function '"<< function->text <<
+        "' defined on line "<< function->line <<".";
+    );
+}
+Error* Errors::undefinedFunction(const Token* t){
+    rtnErr(t->line,
+        "Function '"<<t->text<<"' is not defined.";
+    );
 }
