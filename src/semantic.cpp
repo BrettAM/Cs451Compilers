@@ -51,7 +51,11 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
                     if(e->type != Type::NONE) break;
                     Node* def = table.lookup(e->token->text);
                     if(def == NULL){
-                        errors.push_back(Errors::notDefined(e->token));
+                        if(e->nodeType == CALL){
+                            errors.push_back(Errors::undefinedFunction(e->token));
+                        } else {
+                            errors.push_back(Errors::notDefined(e->token));
+                        }
                     }
                 }break;
                 default:
@@ -71,9 +75,29 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
             Type resultType = Type::NONE;
             switch(e->nodeType){
                 /**
-                 * After the initializer list has been run, add a declaration
+                 * check the initializer list, add decls and params to the
+                 *   symbol table
                  */
                 case DECLARATION:{
+                    Node* init = e->getChild(0);
+                    if(init != NULL){
+                        bool constExpr = checkConstness(init);
+                        if(!constExpr){
+                            errors.push_back(Errors::nonconstInitializer(e->token));
+                        }
+                        if(e->type.returnType() != init->type.returnType()){
+                            if(init->type != Type::NONE){
+                                errors.push_back(
+                                    Errors::badInitializerType(
+                                        e->token,
+                                        init->type,
+                                        e->type)
+                                );
+                            }
+                        }
+                    }
+                } /* FALL THROUGH */
+                case PARAMETER:{
                     string id = e->token->text;
                     bool success = table.add(id, e);
                     if(!success) {
@@ -337,6 +361,10 @@ Type Semantics::checkOperands(Node* opNode, vector<Error*>& errors){
         if(!badTypes && (lhsRaw != rhsRaw)){
             errors.push_back(Errors::mismatchedLR(e->token, lhs, rhs));
         }
+
+        if(lhs.isArray() ^ rhs.isArray()){
+            errors.push_back(Errors::mismatchedArrayStatus(e->token));
+        }
     }
 
 /*
@@ -381,4 +409,22 @@ Type Semantics::checkOperands(Node* opNode, vector<Error*>& errors){
 
     // all other operations return INT
     return Type::INT;
+}
+bool Semantics::checkConstness(AST::Node* subtree){
+    /**
+     * Only references to other IDs can cause a tree to be considered non-const
+     */
+    class Traversal : public Node::Traverser {
+    public:
+        bool constness;
+        Traversal(): constness(true) {}
+        void pre(Node * n){
+            if( dynamic_cast<const IdToken*>(n->token) != NULL ){
+                constness = false;
+            }
+        }
+    };
+    Traversal t;
+    subtree->traverse(t);
+    return t.constness;
 }

@@ -29,6 +29,11 @@ namespace Semantics{
      *    possible
      */
     std::vector<Error*> analyze(AST::Node* root);
+    /**
+     * Returns true if the value represented by `subtree` is a constant
+     *   expression
+     */
+    bool checkConstness(AST::Node* subtree);
 }
 
 #endif

@@ -121,7 +121,7 @@ Error* Errors::badTestType(const Token* t, Type found){
 }
 Error* Errors::mismatchedArrayStatus(const Token* t){
     rtnErr(t->line,
-        t->text << "  requires that either both or neither operands be arrays.";
+        "‘" << t->text << "‘ requires that either both or neither operands be arrays.";
     );
 }
 Error* Errors::nonconstInitializer(const Token* t){
@@ -131,8 +131,8 @@ Error* Errors::nonconstInitializer(const Token* t){
 }
 Error* Errors::badInitializerType(const Token* t, Type found, Type expected){
     rtnErr(t->line,
-        "Variable '"<<t->text<<"' is of "<<expected.rawString()<<
-        " but is being initialized with an expression of "<<
+        "Variable '"<<t->text<<"' is of type "<<expected.rawString()<<
+        " but is being initialized with an expression of type "<<
         found.rawString()<< ".";
     );
 }

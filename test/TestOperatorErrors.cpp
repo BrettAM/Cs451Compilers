@@ -49,8 +49,9 @@ TEST(multiplyInts){
         );
 }
 TEST(intNotEqualIntArray){
-    CHECK_EQUAL( "\n",
-        compileAndCheck("i!=ia;")
+    CHECK_EQUAL( "\n"
+        "ERROR(9): ‘!=‘ requires that either both or neither operands be arrays.\n"
+        ,compileAndCheck("i!=ia;")
         );
 }
 TEST(intLessThanEqualIntArray){
@@ -61,6 +62,7 @@ TEST(intLessThanEqualIntArray){
 }
 TEST(intEqualToIntArray){
     CHECK_EQUAL( "\n"
+        "ERROR(9): ‘==‘ requires that either both or neither operands be arrays.\n"
         ,compileAndCheck("i==ia;")
         );
 }
@@ -72,6 +74,7 @@ TEST(intMultAssignIntArray){
 }
 TEST(intAssignIntArray){
     CHECK_EQUAL( "\n"
+        "ERROR(9): ‘=‘ requires that either both or neither operands be arrays.\n"
         ,compileAndCheck("i=ia;")
         );
 }
@@ -125,3 +128,36 @@ TEST(notIntArray){
         ,compileAndCheck("not ia;")
         );
 }
+TEST(undefinedThings){
+    CHECK_EQUAL( "\n"
+        "ERROR(9): Function 'dog' is not defined.\n"
+        "ERROR(9): Symbol 'dog' is not defined.\n"
+        ,compileAndCheck("dog(); i = dog;")
+        );
+}
+TEST(constInitializer){
+    CHECK_EQUAL( "\n"
+        ,compileAndCheck("int f: 37*4+12/2;")
+        );
+}
+TEST(initializerReferncesVariable){
+    CHECK_EQUAL( "\n"
+        "ERROR(9): Initializer for variable 's' is not a constant expression.\n"
+        ,compileAndCheck("int s: i;")
+        );
+}
+TEST(initializerMakesCall){
+    CHECK_EQUAL( "\n"
+        "ERROR(9): Initializer for variable 'f' is not a constant expression.\n"
+        "ERROR(9): Variable 'f' is of type int but is being initialized with an expression of type void.\n"
+        ,compileAndCheck("int f: main();")
+        );
+}
+/*
+TEST(equalsBothSidesMustBeArrays){
+    CHECK_EQUAL( "\n"
+
+        ,compileAndCheck("")
+        );
+}
+*/

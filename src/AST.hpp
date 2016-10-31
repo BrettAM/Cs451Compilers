@@ -205,6 +205,8 @@ namespace AST{
         CONTROL,
         COMPOUND,
         BREAK,
+        RECORD,
+        PARAMETER,
     };
 
     class Element: public Node {

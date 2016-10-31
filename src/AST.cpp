@@ -118,7 +118,7 @@ Node* AST::ConstNode(const Token* t){
 }
 Node* AST::RecordNode(const IdToken* t, Node* contents){
     static RecordPrinter printer;
-    return new Element(DECLARATION, &printer, t, listof<Node*>() << contents);
+    return new Element(RECORD, &printer, t, listof<Node*>() << contents);
 }
 Node* AST::CallNode(const IdToken* t, Node* args){
     static LabelAndNamePrinter printer("Call: ");
@@ -146,7 +146,7 @@ Node* AST::VarDecl(const IdToken* t, Type type, Node* ivalue){
 }
 Node* AST::Parameter(const IdToken* t, Type type){
     static LabelAndTypePrinter printer("Param ");
-    Element* e = new Element(DECLARATION, &printer, t, listof<Node*>());
+    Element* e = new Element(PARAMETER, &printer, t, listof<Node*>());
     e->type = type;
     return e;
 }
