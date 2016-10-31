@@ -114,13 +114,13 @@ TEST(intNotEqualVoid){
 }
 TEST(notInt){
     CHECK_EQUAL( "\n"
-        "ERROR(9): Unary 'not' requires an operand of type type bool but was given type int.\n"
+        "ERROR(9): Unary 'not' requires an operand of type bool but was given type int.\n"
         ,compileAndCheck("not i;")
         );
 }
 TEST(notIntArray){
     CHECK_EQUAL( "\n"
-        "ERROR(9): Unary 'not' requires an operand of type type bool but was given type int.\n"
+        "ERROR(9): Unary 'not' requires an operand of type bool but was given type int.\n"
         "ERROR(9): The operation 'not' does not work with arrays.\n"
         ,compileAndCheck("not ia;")
         );
