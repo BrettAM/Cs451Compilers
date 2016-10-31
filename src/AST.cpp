@@ -180,7 +180,7 @@ Node* AST::ReturnNode(const Token* t, Node* expr){
 }
 Node* AST::BreakNode(const Token* t){
     static LabelPrinter printer("Break");
-    Element* e = new Element(CONTROL, &printer, t, listof<Node*>());
+    Element* e = new Element(BREAK, &printer, t, listof<Node*>());
     e->type = Type::VOID;
     return e;
 }

@@ -204,6 +204,7 @@ namespace AST{
         OPERATION,
         CONTROL,
         COMPOUND,
+        BREAK,
     };
 
     class Element: public Node {
