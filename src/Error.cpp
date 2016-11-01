@@ -61,9 +61,11 @@ Error* Errors::badArrayIndex(const Token* t, Type received){
     );
 }
 Error* Errors::arrayIndexedByArray(const Token* t){
-    rtnErr(t->line,
-        "Array index is the unindexed array \'"<<t->text<<"\'."
-    );
+    if(t->token == ID){
+        rtnErr(t->line, "Array index is the unindexed array \'"<<t->text<<"\'.");
+    } else {
+        rtnErr(t->line, "Array index is an unindexed array.");
+    }
 }
 Error* Errors::cannotIndexNonarray(const Token* t){
     if(t->token == ID){
