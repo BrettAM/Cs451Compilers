@@ -204,10 +204,14 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
                  * Leave a function, check for no return warnings
                  */
                 case FUNCTIONDECL:{
-                    containingFunc = NULL;
-                    if(!returnedFromYet){
-                        // warning
+                    if(!returnedFromYet && containingFunc->type != Type::VOID){
+                        errors.push_back(
+                            Errors::missingReturnStatement(
+                                e->token,
+                                containingFunc->type)
+                        );
                     }
+                    containingFunc = NULL;
                     returnedFromYet = false;
                 } break;
                 default: break;

@@ -15,14 +15,27 @@ class Error{
 private:
     int32_t lineno;
     std::string description;
+    enum Severity { ERROR, WARNING } severity;
+    Error(int32_t line, std::string description, Severity s)
+        : lineno(line), description(description), severity(s) {}
 public:
     static const int32_t SYNTAX = -2;
     static const int32_t LINKER = -1;
-    Error(int32_t line, std::string description)
-        : lineno(line), description(description){}
+    static Error* Err(int32_t line, std::string description){
+        return new Error(line, description, ERROR);
+    }
+    static Error* Warn(int32_t line, std::string description){
+        return new Error(line, description, WARNING);
+    }
+    bool isWarning() const {
+        return (severity == WARNING);
+    }
     std::string toString() const {
         std::ostringstream oss;
-        oss << "ERROR(";
+        switch(severity){
+            case ERROR:   oss << "ERROR("; break;
+            case WARNING: oss << "WARNING("; break;
+        }
         switch(lineno){
             case LINKER: oss << "LINKER"; break;
             case SYNTAX: oss << "SYNTAX"; break;

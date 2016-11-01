@@ -16,7 +16,14 @@ ostream& operator<<(ostream& os, const Error* e){
     do { \
         std::ostringstream tmp; \
         tmp << transform; \
-        return new Error(line, tmp.str()); \
+        return Error::Err(line, tmp.str()); \
+    } while (false)
+
+#define rtnWarn(line, transform) \
+    do { \
+        std::ostringstream tmp; \
+        tmp << transform; \
+        return Error::Warn(line, tmp.str()); \
     } while (false)
 
 Error* Errors::cannotBeCalled(const Token* t){
@@ -109,7 +116,7 @@ Error* Errors::unaryTypeMismatch(const Token* op, Type found, Type required){
     );
 }
 Error* Errors::missingMainFunction(){
-    return new Error(Error::LINKER,"Procedure main is not defined.");
+    return Error::Err(Error::LINKER,"Procedure main is not defined.");
 }
 Error* Errors::arrayUsedAsTest(const Token* t){
     rtnErr(t->line,
@@ -139,8 +146,8 @@ Error* Errors::badInitializerType(const Token* t, Type found, Type expected){
     );
 }
 Error* Errors::missingReturnStatement(const Token* t, Type found){
-    rtnErr(t->line,
-        "Expecting to return "<<found.rawString()<<" but function '"<<
+    rtnWarn(t->line,
+        "Expecting to return type "<<found.rawString()<<" but function '"<<
         t->text<<"' has no return statement.";
     );
 }

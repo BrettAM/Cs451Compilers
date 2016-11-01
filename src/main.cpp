@@ -41,10 +41,22 @@ int main(int argc, char *argv[]) {
 
     Result r = ParseDriver::run(
         AST::listof<Source>() << Source::IOLibrary << input);
-    vector<Error*> errors = Semantics::analyze(r.getAST());
 
     //syntax error
-    if(r.getErrorFlag()) cout << r.getError() << endl;
+    if(r.getErrorFlag()) {
+        cout << r.getError() << endl;
+        return 1;
+    }
+
+    vector<Error*> errors = Semantics::analyze(r.getAST());
+    int errorCount=0, warningCount=0;
+    for(size_t i=0; i<errors.size(); i++){
+        if(errors[i]->isWarning()) {
+            warningCount += 1;
+        } else {
+            errorCount += 1;
+        }
+    }
 
     //untagged print
     if(printTree){
@@ -62,8 +74,8 @@ int main(int argc, char *argv[]) {
         cout << r.getAST()->formatTree(true);
     }
 
-    cout << "Number of warnings: 0" << endl;
-    cout << "Number of errors: " << errors.size() << endl;
+    cout << "Number of warnings: " << warningCount << endl;
+    cout << "Number of errors: " << errorCount << endl;
 
     r.cleanup();
     if(input != stdin) fclose(input);

@@ -52,7 +52,7 @@ void ParseDriver::rootAST(Node * AST){
 void ParseDriver::pushError(const char * msg){
     std::ostringstream oss;
     oss << msg << " on line " << yylineno;
-    error = new Error(Error::SYNTAX, oss.str());
+    error = Error::Err(Error::SYNTAX, oss.str());
 }
 
 void ParseDriver::pushGlobal(const Token* record){
@@ -140,11 +140,11 @@ void ParseDriver::Result::cleanup(){
  *   as being defined on line -1
  */
 const Source ParseDriver::Source::IOLibrary(
-    "int input();"
+    "int input() return 0;"
     "output(int *dummy*);"
-    "bool inputb();"
+    "bool inputb() return false;"
     "outputb(bool *dummy*);"
-    "char inputc();"
+    "char inputc() return ' ';"
     "outputc(char *dummy*);"
     "outnl();"
     ,-1
