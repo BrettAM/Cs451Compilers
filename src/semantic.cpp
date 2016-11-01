@@ -9,7 +9,9 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
     public:
         vector<Error*> errors;
         SymbolTable table;
+        Element* containingFunc;
         bool prevEnterWasFunc;
+        bool returnedFromYet;
         int loopDepth;
         Analyzer(): prevEnterWasFunc(false), loopDepth(0) {}
         void pre(Node * n){
@@ -43,6 +45,8 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
                     }
 
                     prevEnterWasFunc = true;
+                    containingFunc = e;
+                    returnedFromYet = false;
                     table.enter(n);
                 } break;
                 /**
@@ -173,7 +177,39 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
                     if(loopDepth <= 0){
                         errors.push_back(Errors::breakOutsideLoop(e->token));
                     }
-                }
+                } break;
+                /**
+                 * Check return statement types
+                 */
+                case RETURNSTMT:{
+                    Element* lhNode = dynamic_cast<Element *>(e->getChild(0));
+                    Type lhs = (lhNode != NULL)? lhNode->type.runtime() : Type::VOID;
+
+                    if (lhs.returnType() != containingFunc->type) {
+                        errors.push_back(Errors::badReturnValue(
+                            e->token,
+                            containingFunc->token,
+                            lhs,
+                            containingFunc->type)
+                        );
+                    }
+                    if(lhs.isArray()){
+                        errors.push_back(Errors::cannotReturnArray(e->token));
+                    }
+
+                    returnedFromYet = true;
+                    resultType = Type::VOID;
+                } break;
+                /**
+                 * Leave a function, check for no return warnings
+                 */
+                case FUNCTIONDECL:{
+                    containingFunc = NULL;
+                    if(!returnedFromYet){
+                        // warning
+                    }
+                    returnedFromYet = false;
+                } break;
                 default: break;
             }
             if(resultType != Type::NONE){
@@ -209,24 +245,7 @@ Type Semantics::checkOperands(Node* opNode, vector<Error*>& errors){
     int op = opNode->token->token;
     bool unary = (rhNode == NULL);
 
-    // we don't emit multiple errors, so if lhs is wrong just ignore this op
-    //    if(lhs == Type::NONE) errors.push_back(Type::NONE);
-    // also if its not unary and the other side is none, don't issue errors
-    //   but do return the correct type for further checking
-
-/*
-    '[' -> indexing
-    NOTEQ, LESSEQ, EQ, GRTEQ, '<', '>' -> comparison
-    MULASS, ADDASS, SUBASS, DIVASS, '+', '-', '*', '/', '%' -> intops
-    AND, OR -> boolean
-    '=' -> assignment
-    INC, DEC, NOT, '*', '?' -> unary
-    RETURN
-*/
-    //"ERROR(%d): Cannot index nonarray '%s'.\n"
-    //"ERROR(%d): Cannot index nonarray.\n"
-    //"ERROR(%d): Array index is the unindexed array '%s'.\n"
-    //"ERROR(%d): Array '%s' should be indexed by type int but got %s.\n"
+    // Array index operator
     if(op == '[') {
         if(!lhs.isArray()) {
             errors.push_back(Errors::cannotIndexNonarray(lhNode->token));
@@ -243,19 +262,7 @@ Type Semantics::checkOperands(Node* opNode, vector<Error*>& errors){
         return lhs.returnType();
     }
 
-    //"ERROR(%d): Cannot return an array.\n"
-    if(op == RETURN){
-        if(lhs.isArray()){
-            errors.push_back(Errors::cannotReturnArray(lhNode->token));
-        }
-
-        return Type::VOID;
-    }
-
-
-    //"ERROR(%d): Unary '%s' requires an operand of type %s but was given %s.\n"
-    //"ERROR(%d): The operation '%s' does not work with arrays.\n"
-    //"ERROR(%d): The operation '%s' only works with arrays.\n"
+    // Unary operators
     typedef struct UnarySpecs{
         int op;
         bool arrays;
@@ -290,15 +297,7 @@ Type Semantics::checkOperands(Node* opNode, vector<Error*>& errors){
         }
     }
 
-    // not work with arrays
-    // only works with arrays
-    // requires lhs x
-    // requires rhs x
-    // unary requires lhs x
-    // return type
-
-
-    // comparisons
+    // Comparison operators
     typedef struct ComparisonSpec{
         int op;
     } ComparisonSpec;
@@ -333,7 +332,7 @@ Type Semantics::checkOperands(Node* opNode, vector<Error*>& errors){
         }
     }
 
-    // binary ops
+    // Binary operators
     typedef struct BinarySpec{
         int op;
         Type type;
@@ -377,6 +376,7 @@ Type Semantics::checkOperands(Node* opNode, vector<Error*>& errors){
         }
     }
 
+    // Equality
     if((op == '=' || op == EQ || op == NOTEQ) &&
         !(lhs == Type::NONE || rhs == Type::NONE)){
 
@@ -399,21 +399,7 @@ Type Semantics::checkOperands(Node* opNode, vector<Error*>& errors){
         }
     }
 
-/*
-    '[' -> indexing
-    NOTEQ, LESSEQ, EQ, GRTEQ, '<', '>' -> comparison
-    MULASS, ADDASS, SUBASS, DIVASS, '+', '-', '*', '/', '%' -> intops
-    AND, OR -> boolean
-    '=' -> assignment
-    INC, DEC, NOT, '*', '?' -> unary
-    RETURN
-*/
-
-    //"ERROR(%d): Unary '%s' requires an operand of type %s but was given %s.\n"
-    //"ERROR(%d): The operation '%s' does not work with arrays.\n"
-    //"ERROR(%d): The operation '%s' only works with arrays.\n"
-    // '%s' requires operands of the same type but lhs is _ and rhs in _
-
+    // Subexpression result value
     typedef struct ResultType{
         int op;
         Type result;

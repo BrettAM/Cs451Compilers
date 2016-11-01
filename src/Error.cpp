@@ -155,15 +155,15 @@ Error* Errors::badReturnValue(const Token* t, const Token* function, Type found,
         rtnErr(t->line,
             "Function '"<<
             function->text<<"' at line "<<
-            function->line<<" is expecting to return "<<
+            function->line<<" is expecting to return type "<<
             expected.rawString()<<" but return has no return value.";
         );
     }
     rtnErr(t->line,
         "Function '"<<
         function->text<<"' at line "<<
-        function->line<<" is expecting to return "<<
-        expected.rawString()<<" but instead returns "<<
+        function->line<<" is expecting to return type "<<
+        expected.rawString()<<" but instead returns type "<<
         found.rawString()<<".";
     );
 }

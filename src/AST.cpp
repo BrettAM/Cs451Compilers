@@ -176,7 +176,7 @@ Node* AST::WhileNode(const Token* t, Node* cond, Node* stmts){
 }
 Node* AST::ReturnNode(const Token* t, Node* expr){
     static LabelPrinter printer("Return");
-    return new Element(OPERATION, &printer, t, listof<Node*>() << expr);
+    return new Element(RETURNSTMT, &printer, t, listof<Node*>() << expr);
 }
 Node* AST::BreakNode(const Token* t){
     static LabelPrinter printer("Break");

@@ -207,6 +207,7 @@ namespace AST{
         BREAK,
         RECORD,
         PARAMETER,
+        RETURNSTMT
     };
 
     class Element: public Node {

@@ -176,6 +176,41 @@ TEST(breakingOutsideALoop){
         ,compileAndCheck("while(true); break;")
         );
 }
+TEST(normalReturn){
+    CHECK_EQUAL( "\n"
+        ,compileAndCheck("return;")
+        );
+}
+TEST(arrayReturnNoneExpected){
+    CHECK_EQUAL( "\n"
+        "ERROR(9): Function 'main' at line 8 is expecting no return value, but return has return value.\n"
+        "ERROR(9): Cannot return an array.\n"
+        ,compileAndCheck("return ia;")
+        );
+}
+TEST(returnNoneExpected){
+    CHECK_EQUAL( "\n"
+        "ERROR(9): Function 'main' at line 8 is expecting no return value, but return has return value.\n"
+        ,compileAndCheck("return c;")
+        );
+}
+TEST(returnGoodType){
+    CHECK_EQUAL( "\n"
+        ,compileAndCheck("} int ireturnf() { return i; }")
+        );
+}
+TEST(returnWrongType){
+    CHECK_EQUAL( "\n"
+        "ERROR(9): Function 'ireturnf' at line 9 is expecting to return type int but instead returns type char.\n"
+        ,compileAndCheck("} int ireturnf() { return c; }")
+        );
+}
+TEST(returnNothingExpectingSomething){
+    CHECK_EQUAL( "\n"
+        "ERROR(9): Function 'ireturnf' at line 9 is expecting to return type int but return has no return value.\n"
+        ,compileAndCheck("} int ireturnf() { return; }")
+        );
+}
 /*
 TEST(equalsBothSidesMustBeArrays){
     CHECK_EQUAL( "\n"
