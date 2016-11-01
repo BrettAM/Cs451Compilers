@@ -121,7 +121,7 @@ Error* Errors::badTestType(const Token* t, Type found){
 }
 Error* Errors::mismatchedArrayStatus(const Token* t){
     rtnErr(t->line,
-        "‘" << t->text << "‘ requires that either both or neither operands be arrays.";
+        "'" << t->text << "' requires that either both or neither operands be arrays.";
     );
 }
 Error* Errors::nonconstInitializer(const Token* t){

@@ -50,7 +50,7 @@ TEST(multiplyInts){
 }
 TEST(intNotEqualIntArray){
     CHECK_EQUAL( "\n"
-        "ERROR(9): ‘!=‘ requires that either both or neither operands be arrays.\n"
+        "ERROR(9): '!=' requires that either both or neither operands be arrays.\n"
         ,compileAndCheck("i!=ia;")
         );
 }
@@ -62,7 +62,7 @@ TEST(intLessThanEqualIntArray){
 }
 TEST(intEqualToIntArray){
     CHECK_EQUAL( "\n"
-        "ERROR(9): ‘==‘ requires that either both or neither operands be arrays.\n"
+        "ERROR(9): '==' requires that either both or neither operands be arrays.\n"
         ,compileAndCheck("i==ia;")
         );
 }
@@ -74,7 +74,7 @@ TEST(intMultAssignIntArray){
 }
 TEST(intAssignIntArray){
     CHECK_EQUAL( "\n"
-        "ERROR(9): ‘=‘ requires that either both or neither operands be arrays.\n"
+        "ERROR(9): '=' requires that either both or neither operands be arrays.\n"
         ,compileAndCheck("i=ia;")
         );
 }
@@ -173,7 +173,7 @@ TEST(breakingInALoop){
 TEST(breakingOutsideALoop){
     CHECK_EQUAL( "\n"
         "ERROR(9): Cannot have a break statement outside of loop.\n"
-        ,compileAndCheck("break;")
+        ,compileAndCheck("while(true); break;")
         );
 }
 /*
