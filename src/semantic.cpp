@@ -11,6 +11,7 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
         SymbolTable table;
         bool prevEnterWasFunc;
         int loopDepth;
+        Analyzer(): prevEnterWasFunc(false), loopDepth(0) {}
         void pre(Node * n){
             Element* e = dynamic_cast<Element *>(n);
             if(e == NULL) return; // not an element node
@@ -156,7 +157,8 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
                 case CONTROL:{
                     Node* cond = e->getChild(0);
                     if(cond->type.returnType() != Type::BOOL){
-                        errors.push_back(Errors::badTestType(e->token, cond->type));
+                        if(cond->type != Type::NONE)
+                            errors.push_back(Errors::badTestType(e->token, cond->type));
                     }
                     if(cond->type.isArray()){
                         errors.push_back(Errors::arrayUsedAsTest(e->token));
