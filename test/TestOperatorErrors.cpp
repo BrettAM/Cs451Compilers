@@ -165,6 +165,17 @@ TEST(conditionalStatementArrayCond){
         ,compileAndCheck("if(ba) i;")
         );
 }
+TEST(breakingInALoop){
+    CHECK_EQUAL( "\n"
+        ,compileAndCheck("while(true) { while(false); while(true) break; }")
+        );
+}
+TEST(breakingOutsideALoop){
+    CHECK_EQUAL( "\n"
+        "ERROR(9): Cannot have a break statement outside of loop.\n"
+        ,compileAndCheck("break;")
+        );
+}
 /*
 TEST(equalsBothSidesMustBeArrays){
     CHECK_EQUAL( "\n"

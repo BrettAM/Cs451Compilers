@@ -10,6 +10,7 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
         vector<Error*> errors;
         SymbolTable table;
         bool prevEnterWasFunc;
+        int loopDepth;
         void pre(Node * n){
             Element* e = dynamic_cast<Element *>(n);
             if(e == NULL) return; // not an element node
@@ -58,6 +59,12 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
                         }
                     }
                 }break;
+                /**
+                 * Increment the loop depth count when entering a while loop
+                 */
+                case CONTROL:{
+                    if(e->token->token == WHILE) loopDepth++;
+                }
                 default:
                     break;
             }
@@ -144,6 +151,7 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
                 /**
                  * Check that conditional statements have the right kind of
                  *   conditional checks
+                 * Decrement loop depth if leaving a while loop
                  */
                 case CONTROL:{
                     Node* cond = e->getChild(0);
@@ -153,11 +161,17 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
                     if(cond->type.isArray()){
                         errors.push_back(Errors::arrayUsedAsTest(e->token));
                     }
-                    /*
-                    Error* arrayUsedAsTest(const Token* t);
-                    Error* badTestType(const Token* t, Type found);
-                    */
+
+                    if(e->token->token == WHILE) loopDepth--;
                 } break;
+                /**
+                 * Check that break statements only occur inside loops
+                 */
+                case AST::BREAK:{
+                    if(loopDepth <= 0){
+                        errors.push_back(Errors::breakOutsideLoop(e->token));
+                    }
+                }
                 default: break;
             }
             if(resultType != Type::NONE){
