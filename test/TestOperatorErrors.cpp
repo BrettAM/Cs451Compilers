@@ -153,6 +153,18 @@ TEST(initializerMakesCall){
         ,compileAndCheck("int f: main();")
         );
 }
+TEST(conditionalStatementNonBooleanCond){
+    CHECK_EQUAL( "\n"
+        "ERROR(9): Expecting Boolean test condition in while statement but got type int.\n"
+        ,compileAndCheck("while(i) i;")
+        );
+}
+TEST(conditionalStatementArrayCond){
+    CHECK_EQUAL( "\n"
+        "ERROR(9): Cannot use array as test condition in if statement.\n"
+        ,compileAndCheck("if(ba) i;")
+        );
+}
 /*
 TEST(equalsBothSidesMustBeArrays){
     CHECK_EQUAL( "\n"

@@ -116,7 +116,7 @@ Error* Errors::arrayUsedAsTest(const Token* t){
 }
 Error* Errors::badTestType(const Token* t, Type found){
     rtnErr(t->line,
-        "Expecting Boolean test condition in " << t->text << " statement but got " << found.rawString() << ".";
+        "Expecting Boolean test condition in " << t->text << " statement but got type " << found.rawString() << ".";
     );
 }
 Error* Errors::mismatchedArrayStatus(const Token* t){

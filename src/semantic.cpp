@@ -141,8 +141,24 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
                 case OPERATION:{
                     resultType = checkOperands(e, errors);
                 } break;
-                default:
-                break;
+                /**
+                 * Check that conditional statements have the right kind of
+                 *   conditional checks
+                 */
+                case CONTROL:{
+                    Node* cond = e->getChild(0);
+                    if(cond->type.returnType() != Type::BOOL){
+                        errors.push_back(Errors::badTestType(e->token, cond->type));
+                    }
+                    if(cond->type.isArray()){
+                        errors.push_back(Errors::arrayUsedAsTest(e->token));
+                    }
+                    /*
+                    Error* arrayUsedAsTest(const Token* t);
+                    Error* badTestType(const Token* t, Type found);
+                    */
+                } break;
+                default: break;
             }
             if(resultType != Type::NONE){
                 e->type = resultType;
