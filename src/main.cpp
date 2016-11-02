@@ -48,15 +48,11 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    //semantic analysis
     vector<Error*> errors = Semantics::analyze(r.getAST());
     int errorCount=0, warningCount=0;
-    for(size_t i=0; i<errors.size(); i++){
-        if(errors[i]->isWarning()) {
-            warningCount += 1;
-        } else {
-            errorCount += 1;
-        }
-    }
+    for(size_t i=0; i<errors.size(); i++)
+        ((errors[i]->isWarning())? warningCount : errorCount) += 1;
 
     //untagged print
     if(printTree){

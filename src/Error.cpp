@@ -187,10 +187,10 @@ Error* Errors::tooFewParameters(const Token* call, const Token* function){
 }
 Error* Errors::badParameterType(const Token* t, Type found, Type expected, int parmIndex, const Token* function){
     rtnErr(t->line,
-        "Expecting "<< expected.rawString()<<
+        "Expecting type "<< expected.rawString()<<
         " in parameter "<< parmIndex <<
         " of call to '"<< function->text <<
-        "' defined on line "<< function->line <<" but got "<<
+        "' defined on line "<< function->line <<" but got type "<<
         found.rawString() <<".";
     );
 }

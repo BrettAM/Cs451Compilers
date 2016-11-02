@@ -236,6 +236,46 @@ Type Semantics::checkCall(Node* call, Node* f, vector<Error*>& errors){
         errors.push_back(Errors::cannotBeCalled(call->token));
     }
 
+    std::vector<Node*> empty;
+    const std::vector<Node*>* required;
+    const std::vector<Node*>* found;
+
+    if(function->getChild(0) == NULL){
+        required = &empty;
+    } else {
+        required = function->getChild(0)->viewChildren();
+    }
+
+    if(call->getChild(0) == NULL){
+        found = &empty;
+    } else {
+        found = call->getChild(0)->viewChildren();
+    }
+
+    if(required->size() > found->size()) {
+        errors.push_back(Errors::tooFewParameters(call->token, f->token));
+    } else if (required->size() < found->size()) {
+        errors.push_back(Errors::tooManyParameters(call->token, f->token));
+    }
+
+    for(size_t i=0; i<min(required->size(), found->size()); i++){
+        Type r = required->at(i)->type;
+        Type f = found->at(i)->type;
+        if(r.isArray() && !f.isArray()){
+            errors.push_back(Errors::expectedArrayParameter(
+                call->token, i+1, function->token));
+        } else if (f.isArray() && !r.isArray()){
+            errors.push_back(Errors::unexpectedArrayParameter(
+                call->token, i+1, function->token));
+        }
+
+        if(r.returnType() != f.returnType() && f!=Type::NONE){
+            errors.push_back(Errors::badParameterType(
+                call->token, f, r, i+1, function->token
+                ));
+        }
+    }
+
     return function->type.returnType();
 }
 Type Semantics::checkOperands(Node* opNode, vector<Error*>& errors){
