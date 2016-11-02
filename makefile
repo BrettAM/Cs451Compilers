@@ -19,7 +19,7 @@ OUTPUTTAR?=BrettAM.tar
 
 NAME?=menzies
 SUBMITURL?="http://ec2-52-89-93-46.us-west-2.compute.amazonaws.com/cgi-bin/fileCapture.py"
-ASSIGNMENT?=3
+ASSIGNMENT?=4
 ASSIGNMENT_STRING:=CS445 F16 Assignment $(ASSIGNMENT)
 
 MAIN := $(SDIR)/main.cpp

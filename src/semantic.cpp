@@ -4,9 +4,70 @@ using namespace std;
 using namespace AST;
 using namespace Semantics;
 
+namespace Internal {
+    std::vector<Node*> empty;
+    class ParameterContext {
+    private:
+        Node* call;
+        Node* function;
+        size_t pIdx;
+        const std::vector<Node*>* required;
+        const std::vector<Node*>* found;
+    public:
+        ParameterContext(Node* call, Node* function):
+          call(call), function(function), pIdx(0) {
+            required = (function == NULL || function->getChild(0) == NULL)
+                                ? &empty
+                                : function->getChild(0)->viewChildren();
+            found = (call == NULL || call->getChild(0) == NULL)
+                                ? &empty
+                                : call->getChild(0)->viewChildren();
+        }
+        void tryProcess(Node* n, vector<Error*>& errors){
+            if(pIdx >= found->size() || n != found->at(pIdx)) return;
+            if(pIdx >= required->size()) return;
+
+            Type r = required->at(pIdx)->type;
+            Type f = n->type;
+
+            if(f != Type::NONE){
+                if(r.isArray() && !f.isArray()){
+                    errors.push_back(Errors::expectedArrayParameter(
+                        call->token, pIdx+1, function->token));
+                } else if (f.isArray() && !r.isArray()){
+                    errors.push_back(Errors::unexpectedArrayParameter(
+                        call->token, pIdx+1, function->token));
+                }
+
+                if(r.returnType() != f.returnType()){
+                    errors.push_back(Errors::badParameterType(
+                        call->token, f, r, pIdx+1, function->token
+                        ));
+                }
+            }
+
+            pIdx = pIdx+1;
+            if(pIdx == required->size() && found->size() > required->size()){
+                errors.push_back(Errors::tooManyParameters(
+                    call->token,
+                    function->token));
+            }
+        }
+        void complete(vector<Error*>& errors){
+            if(found->size() < required->size()){
+                errors.push_back(Errors::tooFewParameters(
+                    call->token,
+                    function->token));
+            }
+        }
+    };
+}
+using namespace Internal;
+
 std::vector<Error*> Semantics::analyze(AST::Node* root){
     class Analyzer : public Node::Traverser {
     public:
+        vector<ParameterContext> parameterContextStack;
         vector<Error*> errors;
         SymbolTable table;
         Element* containingFunc;
@@ -62,6 +123,10 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
                         } else {
                             errors.push_back(Errors::notDefined(e->token));
                         }
+                    }
+
+                    if(e->nodeType == CALL){
+                        parameterContextStack.push_back(ParameterContext(e, def));
                     }
                 }break;
                 /**
@@ -138,13 +203,19 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
                  *   find the call's return type.
                  */
                 case CALL:{
+                    parameterContextStack.back().complete(errors);
+                    parameterContextStack.pop_back();
+
                     Node* func = table.lookup(e->token->text);
                     if(func == NULL){
                         // undefined errors are caught in preorder traversal
                         break;
                     }
 
-                    resultType = checkCall(e, func, errors);
+                    Element* function = dynamic_cast<Element *>(func);
+                    if(function->nodeType != FUNCTIONDECL){
+                        errors.push_back(Errors::cannotBeCalled(e->token));
+                    }
                 } break;
                 /**
                  * Check that an operation is performed on subtrees of valid
@@ -218,6 +289,11 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
             }
             if(resultType != Type::NONE){
                 e->type = resultType;
+            }
+
+            if(parameterContextStack.size() > 0){
+                ParameterContext& ctx = parameterContextStack.back();
+                ctx.tryProcess(e, errors);
             }
         }
     } analyzer;
