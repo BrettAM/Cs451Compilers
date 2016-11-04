@@ -72,6 +72,8 @@ namespace Errors{
     Error* nonconstInitializer(const Token* t);
     Error* badInitializerType(const Token* t, Type found, Type expected);
     Error* missingReturnStatement(const Token* t, Type found);
+    Error* expectedNoReturnValue(const Token* t, const Token* function);
+    Error* returnValueExpected(const Token* t, const Token* function, Type expected);
     Error* badReturnValue(const Token* t, const Token* function, Type found, Type expected);
     Error* breakOutsideLoop(const Token* t);
     Error* tooFewParameters(const Token* call, const Token* function);

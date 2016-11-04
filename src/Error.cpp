@@ -151,21 +151,22 @@ Error* Errors::missingReturnStatement(const Token* t, Type found){
         t->text<<"' has no return statement.";
     );
 }
-Error* Errors::badReturnValue(const Token* t, const Token* function, Type found, Type expected){
-    if(expected == Type::VOID){
-        rtnErr(t->line,
-            "Function '"<<
-            function->text<<"' at line "<<
-            function->line<<" is expecting no return value, but return has return value.";
-        );
-    } else if (found == Type::VOID){
+Error* Errors::expectedNoReturnValue(const Token* t, const Token* function){
+    rtnErr(t->line,
+        "Function '"<<
+        function->text<<"' at line "<<
+        function->line<<" is expecting no return value, but return has return value.";
+    );
+}
+Error* Errors::returnValueExpected(const Token* t, const Token* function, Type expected){
         rtnErr(t->line,
             "Function '"<<
             function->text<<"' at line "<<
             function->line<<" is expecting to return type "<<
             expected.rawString()<<" but return has no return value.";
         );
-    }
+}
+Error* Errors::badReturnValue(const Token* t, const Token* function, Type found, Type expected){
     rtnErr(t->line,
         "Function '"<<
         function->text<<"' at line "<<

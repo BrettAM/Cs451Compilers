@@ -31,18 +31,17 @@ namespace Internal {
             Type f = n->type;
 
             if(f != Type::NONE){
+                if(r.returnType() != f.returnType()){
+                    errors.push_back(Errors::badParameterType(
+                        call->token, f, r, pIdx+1, function->token
+                        ));
+                }
                 if(r.isArray() && !f.isArray()){
                     errors.push_back(Errors::expectedArrayParameter(
                         call->token, pIdx+1, function->token));
                 } else if (f.isArray() && !r.isArray()){
                     errors.push_back(Errors::unexpectedArrayParameter(
                         call->token, pIdx+1, function->token));
-                }
-
-                if(r.returnType() != f.returnType()){
-                    errors.push_back(Errors::badParameterType(
-                        call->token, f, r, pIdx+1, function->token
-                        ));
                 }
             }
 
@@ -216,6 +215,7 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
                     if(function->nodeType != FUNCTIONDECL){
                         errors.push_back(Errors::cannotBeCalled(e->token));
                     }
+                    resultType = function->type.returnType();
                 } break;
                 /**
                  * Check that an operation is performed on subtrees of valid
@@ -256,7 +256,17 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
                     Element* lhNode = dynamic_cast<Element *>(e->getChild(0));
                     Type lhs = (lhNode != NULL)? lhNode->type.runtime() : Type::VOID;
 
-                    if (lhs.returnType() != containingFunc->type) {
+                    if(lhNode == NULL && containingFunc->type != Type::VOID){
+                        errors.push_back(Errors::returnValueExpected(
+                            e->token,
+                            containingFunc->token,
+                            containingFunc->type));
+                    } else if(lhNode != NULL && containingFunc->type == Type::VOID){
+                        errors.push_back(Errors::expectedNoReturnValue(
+                            e->token,
+                            containingFunc->token));
+                    } else if (lhs.returnType() != containingFunc->type
+                          && lhs != Type::NONE) {
                         errors.push_back(Errors::badReturnValue(
                             e->token,
                             containingFunc->token,
