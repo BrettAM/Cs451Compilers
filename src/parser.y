@@ -91,6 +91,7 @@ declarationList : declarationList declaration { $$ = $1->addAll($2); delete $2; 
 declaration : varDeclaration
             | funDeclaration { $$ = (new listof<Node*>)->add($1); }
             | recDeclaration { $$ = (new listof<Node*>)->add($1); }
+            | error { }
             ;
 
 recDeclaration : RECORD ID '{' localDeclarations '}'
@@ -101,8 +102,11 @@ recDeclaration : RECORD ID '{' localDeclarations '}'
                  }
                ;
 
-varDeclaration : typeSpecifier varDeclList ';'
+varDeclaration : error varDeclList ';' {  }
+               | typeSpecifier error ';' { yyerrok; }
+               | typeSpecifier varDeclList ';'
         {
+          yyerrok;
           listof<Node*>* nodelist = new listof<Node*>();
           Type type = *$1;
           std::vector<IdComp> ids = *$2;
@@ -122,8 +126,10 @@ varDeclaration : typeSpecifier varDeclList ';'
           $$ = nodelist;
         };
 
-scopedVarDeclaration : scopedTypeSpecifier varDeclList ';'
-        {
+scopedVarDeclaration : error varDeclList ';' { yyerrok; }
+                     | scopedTypeSpecifier error ';' { yyerrok; }
+                     | scopedTypeSpecifier varDeclList ';'
+        { yyerrok;
           listof<Node*>* nodelist = new listof<Node*>();
           Type type = *$1;
           std::vector<IdComp> ids = *$2;
@@ -143,16 +149,22 @@ scopedVarDeclaration : scopedTypeSpecifier varDeclList ';'
           $$ = nodelist;
         };
 
-varDeclList : varDeclList ',' varDeclInitialize { $$ = $1->add($3); }
+varDeclList : varDeclList ',' varDeclInitialize { yyerrok; $$ = $1->add($3); }
             | varDeclInitialize                 { $$ = (new listof<IdComp>())->add($1); }
+            | varDeclList ',' error             { }
+            | error                             { }
             ;
 
 varDeclInitialize : varDeclId
                   | varDeclId ':' simpleExpression { $$ = $1; $$.init = $3; }
+                  | varDeclId ':' error            { $$ = $1; }
+                  | error     ':' simpleExpression { yyerrok; }
                   ;
 
 varDeclId : ID                  { IdComp x = {$1, -1, NULL}; $$ = x; }
           | ID '[' NUMCONST ']' { IdComp x = {$1, ((NumConst*)$3)->value, NULL}; $$ = x; }
+          | ID '[' error        { }
+          | error ']'           { yyerrok; }
           ;
 
 scopedTypeSpecifier : STATIC typeSpecifier { $$ = new Type($2->asStatic()); delete $2; }
@@ -170,17 +182,24 @@ returnTypeSpecifier : INT  { $$ = new Type(Type::INT); }
 
 funDeclaration : typeSpecifier ID '(' params ')' statement { $$ = FuncDecl($2, (*$1).asFunc(), $4, $6); delete $1; }
                | ID '(' params ')' statement               { $$ = FuncDecl($1, Type::VOID.asFunc(), $3, $5); }
+               | typeSpecifier error                       { }
+               | typeSpecifier ID '(' error                { }
+               | typeSpecifier ID '(' params ')' error     { }
+               | ID '(' error                              { }
+               | ID '(' params ')' error                   { }
                ;
 
 params : paramList   { $$ = Siblings(*($1)); delete $1; }
        | /* empty */ { $$ = Leaf(); }
        ;
 
-paramList : paramList ';' paramTypeList { $$ = $1->addAll($3); delete $3; }
-          | paramTypeList
+paramList : paramList ';' paramTypeList { yyerrok; $$ = $1->addAll($3); delete $3; }
+          | paramTypeList ';' error { }
+          | error { }
           ;
 
-paramTypeList : typeSpecifier paramIdList
+paramTypeList : typeSpecifier error {}
+              | typeSpecifier paramIdList
                 {
                   //
                   $$ = (new listof<Node *>());
@@ -200,12 +219,14 @@ paramTypeList : typeSpecifier paramIdList
                   }
                 };
 
-paramIdList : paramIdList ',' paramId { $$ = $1->add($3); }
-            | paramId                 { $$ = (new listof<IdComp>())->add($1); }
+paramIdList : paramIdList ',' paramId { yyerrok; $$ = $1->add($3); }
+            | paramIdList ',' error   { }
+            | error                   { }
             ;
 
 paramId : ID         { IdComp x = {$1, -1, NULL}; $$ = x; }
         | ID '[' ']' { IdComp x = {$1,  0, NULL}; $$ = x; }
+        | error  ']' { yyerrok; }
         ;
 
 statement : matchedStmt
@@ -223,6 +244,12 @@ matchedStmt : subStatement
               { $$ = IfNode($1, $3, $5, $7); }
             | WHILE '(' simpleExpression ')' matchedStmt
               { $$ = WhileNode($1, $3, $5); }
+            | IF '(' error { }
+            | IF error ')' matchedStmt ELSE matchedStmt { yyerrok; }
+            | WHILE error ')' matchedStmt { yyerrok; }
+            | WHILE '(' error ')' matchedStmt { yyerrok; }
+            | WHILE error { }
+            | error { }
             ;
 
 unmatchedStmt : IF '(' simpleExpression ')' matchedStmt ELSE unmatchedStmt
@@ -233,10 +260,17 @@ unmatchedStmt : IF '(' simpleExpression ')' matchedStmt ELSE unmatchedStmt
                 { $$ = IfNode($1, $3, $5, Leaf()); }
               | WHILE '(' simpleExpression ')' unmatchedStmt
                 { $$ = WhileNode($1, $3, $5); }
+              | IF error { }
+              | IF error ')' matchedStmt                    { yyerrok; }
+              | IF error ')' matchedStmt ELSE unmatchedStmt { yyerrok; }
+              | WHILE error ')' unmatchedStmt               { yyerrok; }
+              | WHILE '(' error ')' unmatchedStmt           { yyerrok; }
               ;
 
-compoundStmt : '{' localDeclarations statementList '}'
-               {
+compoundStmt : '{' error statementList '}'             { yyerrok; }
+             | '{' localDeclarations error '}'         { yyerrok; }
+             | '{' localDeclarations statementList '}'
+               { yyerrok;
                  $$ = Compound($1, Siblings(*($2)), Siblings(*($3)));
                  delete $2;
                  delete $3;
@@ -251,15 +285,15 @@ statementList : statementList statement { $$ = $1->add($2); }
               | /* empty */             { $$ = (new listof<Node*>()); }
               ;
 
-expressionStmt : expression ';'
-               | ';' { $$ = Leaf(); }
+expressionStmt : expression ';' { yyerrok; }
+               | ';' { yyerrok; $$ = Leaf(); }
                ;
 
-returnStmt : RETURN ';'            { $$ = ReturnNode($1, Leaf()); }
-           | RETURN expression ';' { $$ = ReturnNode($1, $2); }
+returnStmt : RETURN ';'            { yyerrok; $$ = ReturnNode($1, Leaf()); }
+           | RETURN expression ';' { yyerrok; $$ = ReturnNode($1, $2); }
            ;
 
-breakStmt : BREAK ';' { $$ = BreakNode($1); }
+breakStmt : BREAK ';' { yyerrok; $$ = BreakNode($1); }
           ;
 
 expression : mutable '=' expression    { $$ = AssignNode($2, $1, $3); }
@@ -267,25 +301,32 @@ expression : mutable '=' expression    { $$ = AssignNode($2, $1, $3); }
            | mutable SUBASS expression { $$ = AssignNode($2, $1, $3); }
            | mutable MULASS expression { $$ = AssignNode($2, $1, $3); }
            | mutable DIVASS expression { $$ = AssignNode($2, $1, $3); }
-           | mutable INC               { $$ = AssignNode($2, $1, Leaf()); }
-           | mutable DEC               { $$ = AssignNode($2, $1, Leaf()); }
+           | mutable INC               { yyerrok; $$ = AssignNode($2, $1, Leaf()); }
+           | mutable DEC               { yyerrok; $$ = AssignNode($2, $1, Leaf()); }
            | simpleExpression
+           | error INC                 { yyerrok; }
+           | error DEC                 { yyerrok; }
            ;
 
 simpleExpression : simpleExpression OR andExpression { $$ = OpNode($2, $1, $3); }
                  | andExpression
+                 | simpleExpression OR error { }
                  ;
 
 andExpression : andExpression AND unaryRelExpression { $$ = OpNode($2, $1, $3); }
               | unaryRelExpression
+              | andExpression AND error { }
               ;
 
 unaryRelExpression : NOT unaryRelExpression { $$ = OpNode($1, $2, Leaf()); }
                    | relExpression
+                   | NOT error { }
                    ;
 
 relExpression : sumExpression relop sumExpression { $$ = OpNode($2, $1, $3); }
               | sumExpression
+              | sumExpression relop error { }
+              | error relop sumExpression { yyerrok; }
               ;
 
 relop : LESSEQ
@@ -298,6 +339,7 @@ relop : LESSEQ
 
 sumExpression : sumExpression sumop term { $$ = OpNode($2, $1, $3); }
               | term
+              | sumExpression sumop error { yyerrok; }
               ;
 
 sumop :'+'
@@ -306,6 +348,7 @@ sumop :'+'
 
 term : term mulop unaryExpression { $$ = OpNode($2, $1, $3); }
      | unaryExpression
+     | term mulop error { }
      ;
 
 mulop :'*'
@@ -315,6 +358,7 @@ mulop :'*'
 
 unaryExpression : unaryop unaryExpression { $$ = OpNode($1, $2, Leaf()); }
                 | factor
+                | unaryop error { }
                 ;
 
 unaryop : '-'
@@ -331,20 +375,24 @@ mutable : ID                         { $$ = IdNode($1); }
         | mutable '.' ID             { $$ = OpNode($2, $1, IdNode($3)); }
         ;
 
-immutable : '(' expression ')' { $$ = $2; }
+immutable : '(' expression ')' { yyerrok; $$ = $2; }
           | call
           | constant { $$ = ConstNode($1); }
+          | '(' error { }
+          | error ')' { }
           ;
 
 call : ID '(' args ')' { $$ = CallNode($1, $3); }
+     | error '(' { yyerrok; }
      ;
 
 args : argList     { $$ = Siblings(*($1)); delete $1;}
      | /* empty */ { $$ = Leaf(); }
      ;
 
-argList : argList ',' expression { $$ = $1->add($3); }
+argList : argList ',' expression { yyerrok; $$ = $1->add($3); }
         | expression             { $$ = (new listof<Node*>())->add($1); }
+        | argList ',' error      { }
         ;
 
 constant : NUMCONST
