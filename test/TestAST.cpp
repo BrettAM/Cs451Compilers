@@ -241,8 +241,9 @@ TEST(SiblingPrintFunction){
 }
 
 TEST(VarDeclEquality){
-    Node* A = VarDecl(new IdToken(ID,1,"x"), Type::INT);
-    Node* B = VarDecl(new IdToken(ID,1,"x"), Type::INT);
+    auto x = IdToken(ID,1,"x");
+    Node* A = VarDecl(&x, Type::INT);
+    Node* B = VarDecl(&x, Type::INT);
     CHECK_EQUAL(*A,*B);
     A->deleteTree();
     B->deleteTree();
@@ -257,21 +258,26 @@ TEST(LeafEquality){
 }
 
 TEST(NodeEquality){
+    auto x = IdToken(ID,1,"x");
+    auto mul = Token('*',1,"*");
+    auto fiftyTwo = NumConst(NUMCONST,1,"52");
+    auto three = NumConst(NUMCONST,1,"3");
+
     Node* A = Siblings(
         listof<Node*>() <<
-            VarDecl(new IdToken(ID,1,"x"), Type::INT,
-                OpNode(new Token('*',1,"*"),
-                    ConstNode(new NumConst(NUMCONST,1,"52")),
-                    ConstNode(new NumConst(NUMCONST,1,"3"))
+            VarDecl(&x, Type::INT,
+                OpNode(&mul,
+                    ConstNode(&fiftyTwo),
+                    ConstNode(&three)
                 )
             )
     );
     Node* B = Siblings(
         listof<Node*>() <<
-            VarDecl(new IdToken(ID,1,"x"), Type::INT,
-                OpNode(new Token('*',1,"*"),
-                    ConstNode(new NumConst(NUMCONST,1,"52")),
-                    ConstNode(new NumConst(NUMCONST,1,"3"))
+            VarDecl(&x, Type::INT,
+                OpNode(&mul,
+                    ConstNode(&fiftyTwo),
+                    ConstNode(&three)
                 )
             )
     );
@@ -283,9 +289,11 @@ TEST(NodeEquality){
 }
 
 TEST(VarDeclInequality){
-    Node* A = VarDecl(new IdToken(ID,1,"x"), Type::INT);
-    Node* B = VarDecl(new IdToken(ID,2,"x"), Type::INT);
-    Node* C = VarDecl(new IdToken(ID,1,"x"), Type::BOOL);
+    auto x1 = IdToken(ID,1,"x");
+    auto x2 = IdToken(ID,2,"x");
+    Node* A = VarDecl(&x1, Type::INT);
+    Node* B = VarDecl(&x2, Type::INT);
+    Node* C = VarDecl(&x1, Type::BOOL);
     CHECK(! (*A==*B));
     CHECK(! (*B==*C));
     CHECK(! (*A==*C));
