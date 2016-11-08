@@ -102,9 +102,7 @@ recDeclaration : RECORD ID '{' localDeclarations '}'
                  }
                ;
 
-varDeclaration : error varDeclList ';' {  }
-               | typeSpecifier error ';' { yyerrok; }
-               | typeSpecifier varDeclList ';'
+varDeclaration : typeSpecifier varDeclList ';'
         {
           yyerrok;
           listof<Node*>* nodelist = new listof<Node*>();
@@ -124,11 +122,12 @@ varDeclaration : error varDeclList ';' {  }
             );
           }
           $$ = nodelist;
-        };
+        }
+               | error varDeclList ';' {  }
+               | typeSpecifier error ';' { yyerrok; }
+               ;
 
-scopedVarDeclaration : error varDeclList ';' { yyerrok; }
-                     | scopedTypeSpecifier error ';' { yyerrok; }
-                     | scopedTypeSpecifier varDeclList ';'
+scopedVarDeclaration : scopedTypeSpecifier varDeclList ';'
         { yyerrok;
           listof<Node*>* nodelist = new listof<Node*>();
           Type type = *$1;
@@ -147,7 +146,10 @@ scopedVarDeclaration : error varDeclList ';' { yyerrok; }
             );
           }
           $$ = nodelist;
-        };
+        }
+                     | error varDeclList ';' { yyerrok; }
+                     | scopedTypeSpecifier error ';' { yyerrok; }
+                     ;
 
 varDeclList : varDeclList ',' varDeclInitialize { yyerrok; $$ = $1->add($3); }
             | varDeclInitialize                 { $$ = (new listof<IdComp>())->add($1); }
@@ -198,8 +200,7 @@ paramList : paramList ';' paramTypeList { yyerrok; $$ = $1->addAll($3); delete $
           | error { }
           ;
 
-paramTypeList : typeSpecifier error {}
-              | typeSpecifier paramIdList
+paramTypeList : typeSpecifier paramIdList
                 {
                   //
                   $$ = (new listof<Node *>());
@@ -217,7 +218,9 @@ paramTypeList : typeSpecifier error {}
                       )
                     );
                   }
-                };
+                }
+              | typeSpecifier error {}
+              ;
 
 paramIdList : paramIdList ',' paramId { yyerrok; $$ = $1->add($3); }
             | paramIdList ',' error   { }
@@ -267,14 +270,14 @@ unmatchedStmt : IF '(' simpleExpression ')' matchedStmt ELSE unmatchedStmt
               | WHILE '(' error ')' unmatchedStmt           { yyerrok; }
               ;
 
-compoundStmt : '{' error statementList '}'             { yyerrok; }
-             | '{' localDeclarations error '}'         { yyerrok; }
-             | '{' localDeclarations statementList '}'
+compoundStmt : '{' localDeclarations statementList '}'
                { yyerrok;
                  $$ = Compound($1, Siblings(*($2)), Siblings(*($3)));
                  delete $2;
                  delete $3;
                }
+             | '{' error statementList '}'             { yyerrok; }
+             | '{' localDeclarations error '}'         { yyerrok; }
              ;
 
 localDeclarations : localDeclarations scopedVarDeclaration { $$ = $1->addAll($2); delete $2; }
