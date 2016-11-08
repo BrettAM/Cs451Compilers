@@ -39,44 +39,46 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    // Run flex and bison
     Result r = ParseDriver::run(
         AST::listof<Source>() << Source::IOLibrary << input);
 
-    //syntax error
-    if(r.getErrorFlag()) {
-        std::vector<Error*>* errors = r.getErrors();
-        for(size_t i=0; i<errors->size(); i++){
-            cout << errors->at(i) << endl;
-        }
-        return 1;
+    vector<Error*> semErrors;
+    AST::listof<Error*> errorList;
+    errorList.addAll(r.getErrors());
+
+    // if there are no syntax errors, run semantic analysis
+    if(!r.getErrorFlag()) {
+        semErrors = Semantics::analyze(r.getAST());
+        errorList.addAll(&semErrors);
     }
+    vector<Error*> errors = errorList;
 
-    //semantic analysis
-    vector<Error*> errors = Semantics::analyze(r.getAST());
-    int errorCount=0, warningCount=0;
-    for(size_t i=0; i<errors.size(); i++)
-        ((errors[i]->isWarning())? warningCount : errorCount) += 1;
-
-    //untagged print
+    // untagged print
     if(printTree){
         cout << r.getAST()->formatTree(false);
     }
 
-    //semantic errors
+    // semantic errors
     for(size_t i=0; i<errors.size(); i++){
         cout << errors[i] << endl;
-        delete errors[i];
     }
 
-    //tagged print
+    // tagged print
     if(printTypedTree){
         cout << r.getAST()->formatTree(true);
     }
+
+    // count error/warning totals
+    int errorCount=0, warningCount=0;
+    for(size_t i=0; i<errors.size(); i++)
+        ((errors[i]->isWarning())? warningCount : errorCount) += 1;
 
     cout << "Number of warnings: " << warningCount << endl;
     cout << "Number of errors: " << errorCount << endl;
 
     r.cleanup();
+    for(size_t i=0; i<semErrors.size(); i++) delete semErrors[i];
     if(input != stdin) fclose(input);
     return 0;
 }

@@ -21,7 +21,12 @@ namespace ParseDriver {
             tokens(tokens), AST(AST), errors(errors) {}
         const std::vector<const Token*>* getTokens() const { return tokens; }
         AST::Node* getAST() const { return AST; }
-        bool getErrorFlag() const { return errors->size() != 0; }
+        bool getErrorFlag() const {
+            for(size_t i=0; i<errors->size(); i++){
+                if(!errors->at(i)->isWarning()) return true;
+            }
+            return false;
+        }
         std::vector<Error*>* getErrors() const { return errors; }
         /**
          * Free all the memory associated with the result. All references
