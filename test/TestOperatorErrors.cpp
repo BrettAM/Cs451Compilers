@@ -26,6 +26,12 @@ string compileAndCheck(std::string s){
         << s << "\n}";
     auto code = oss.str();
     auto result = ParseDriver::run(code.c_str());
+
+    std::vector<Error*>* pe = result.getErrors();
+    for(size_t i = 0; i<pe->size(); i++){
+        cerr << "Test Syntax Error: " << pe->at(i) << endl;
+    }
+
     auto errors = Semantics::analyze(result.getAST());
     ostringstream errstring;
     errstring << "\n";
@@ -196,19 +202,19 @@ TEST(returnNoneExpected){
 }
 TEST(returnGoodType){
     CHECK_EQUAL( "\n"
-        ,compileAndCheck("} int ireturnf() { return i; }")
+        ,compileAndCheck("} int ireturnf() { return i; ")
         );
 }
 TEST(returnWrongType){
     CHECK_EQUAL( "\n"
         "ERROR(9): Function 'ireturnf' at line 9 is expecting to return type int but instead returns type char.\n"
-        ,compileAndCheck("} int ireturnf() { return c; }")
+        ,compileAndCheck("} int ireturnf() { return c; ")
         );
 }
 TEST(returnNothingExpectingSomething){
     CHECK_EQUAL( "\n"
         "ERROR(9): Function 'ireturnf' at line 9 is expecting to return type int but return has no return value.\n"
-        ,compileAndCheck("} int ireturnf() { return; }")
+        ,compileAndCheck("} int ireturnf() { return; ")
         );
 }
 /*
