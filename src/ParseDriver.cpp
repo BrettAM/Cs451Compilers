@@ -50,9 +50,9 @@ void ParseDriver::rootAST(Node * AST){
 }
 
 void ParseDriver::parseError(const char * msg){
-    std::ostringstream oss;
-    oss << msg << " on line " << yylineno;
-    errors->push_back(Error::Err(Error::SYNTAX, oss.str()));
+    errors->push_back(
+        Error::Err(yylineno,
+            Mangler::mangleErrorString(msg, tokenList->back())));
 }
 
 void ParseDriver::pushError(Error * error){

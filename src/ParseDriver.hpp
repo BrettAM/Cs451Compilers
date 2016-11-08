@@ -9,6 +9,7 @@
 #include "Token.hpp"
 #include "AST.hpp"
 #include "Error.hpp"
+#include "Mangler.hpp"
 
 namespace ParseDriver {
     class Result {
