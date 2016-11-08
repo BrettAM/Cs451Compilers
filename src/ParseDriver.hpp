@@ -15,14 +15,14 @@ namespace ParseDriver {
     private:
         std::vector<const Token*>* tokens;
         AST::Node* AST;
-        Error* error;
+        std::vector<Error*>* errors;
     public:
-        Result(std::vector<const Token*>* tokens, AST::Node* AST, Error* error):
-            tokens(tokens), AST(AST), error(error) {}
+        Result(std::vector<const Token*>* tokens, AST::Node* AST, std::vector<Error*>* errors):
+            tokens(tokens), AST(AST), errors(errors) {}
         const std::vector<const Token*>* getTokens() const { return tokens; }
         AST::Node* getAST() const { return AST; }
-        bool getErrorFlag() const { return error != NULL; }
-        Error* getError() const { return error; }
+        bool getErrorFlag() const { return errors->size() != 0; }
+        std::vector<Error*>* getErrors() const { return errors; }
         /**
          * Free all the memory associated with the result. All references
          * to the original tokens and AST become invalid.
@@ -34,7 +34,8 @@ namespace ParseDriver {
     /**
      * Interface to log an error from flex/bison
      */
-    void pushError(const char *);
+    void parseError(const char *);
+    void pushError(Error *);
     /**
      * Interface for flex to add a token pointer to the results
      */

@@ -23,20 +23,20 @@ namespace { // file local namespace
     std::vector<const Token*>* tokenList;
     map<string,const Token *> globs;
     AST::Node* ASTroot;
-    Error* error;
+    std::vector<Error*>* errors;
 
     void setup(){
         tokenList = new std::vector<const Token*>();
         globs = map<string,const Token *>();
         ASTroot = NULL;
-        error = NULL;
+        errors = new std::vector<Error*>();
     }
 
     void teardown(){
         tokenList = NULL;
         globs.clear();
         ASTroot = NULL;
-        error = NULL;
+        errors = NULL;
     }
 }
 
@@ -49,10 +49,14 @@ void ParseDriver::rootAST(Node * AST){
     ASTroot = AST;
 }
 
-void ParseDriver::pushError(const char * msg){
+void ParseDriver::parseError(const char * msg){
     std::ostringstream oss;
     oss << msg << " on line " << yylineno;
-    error = Error::Err(Error::SYNTAX, oss.str());
+    errors->push_back(Error::Err(Error::SYNTAX, oss.str()));
+}
+
+void ParseDriver::pushError(Error * error){
+    errors->push_back(error);
 }
 
 void ParseDriver::pushGlobal(const Token* record){
@@ -105,7 +109,7 @@ Result ParseDriver::run(std::vector<Source> sources){
     }
 
     Node* root = Siblings(fullChildList);
-    Result result = Result(tokenList, root, error);
+    Result result = Result(tokenList, root, errors);
 
     teardown();
     return result;
@@ -121,11 +125,14 @@ void ParseDriver::Result::cleanup(){
     delete tokens;
     tokens = NULL;
 
-    // free error pointer
-    if(error != NULL){
-        delete error;
-        error = NULL;
+    // free error pointers
+    for(std::vector<Error*>::iterator itr = errors->begin();
+            itr != errors->end();
+            ++itr){
+        delete (*itr);
     }
+    delete errors;
+    errors = NULL;
 
     // free all the tree nodes
     if(AST != NULL) {

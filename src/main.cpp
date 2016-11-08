@@ -44,7 +44,10 @@ int main(int argc, char *argv[]) {
 
     //syntax error
     if(r.getErrorFlag()) {
-        cout << r.getError() << endl;
+        std::vector<Error*>* errors = r.getErrors();
+        for(size_t i=0; i<errors->size(); i++){
+            cout << errors->at(i) << endl;
+        }
         return 1;
     }
 

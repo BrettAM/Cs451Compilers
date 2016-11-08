@@ -1,5 +1,6 @@
 %{
 #include "Token.hpp"
+#include "Error.hpp"
 #include "ParseDefines.hpp"
 #include "ParseDriver.hpp"
 using namespace ParseDriver;
@@ -54,6 +55,9 @@ using namespace ParseDriver;
                  }
 ([\n\t ]*)|([\/]{2}.*) {
                    /* ignored whitespace characters */; }
-.                { pushToken(new Invalid(MISPLACED, yylineno, yytext)); }
+.                { Token* misplaced = new Invalid(MISPLACED, yylineno, yytext);
+                   pushToken(misplaced);
+                   pushError(Errors::invalidInputCharacter(misplaced));
+                 }
 
 %%

@@ -25,7 +25,11 @@ ostream& operator<<(ostream& os, const Error* e){
         tmp << transform; \
         return Error::Warn(line, tmp.str()); \
     } while (false)
-
+Error* Errors::invalidInputCharacter(const Token* t){
+    rtnWarn(t->line,
+        "Invalid input character: \'"<<t->text<<"\'. Character ignored.";
+    );
+}
 Error* Errors::cannotBeCalled(const Token* t){
     rtnErr(t->line,
         "\'"<<t->text<<"\' is a simple variable and cannot be called."

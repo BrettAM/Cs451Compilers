@@ -49,6 +49,7 @@ std::ostream& operator<<(std::ostream&, const Error&);
 std::ostream& operator<<(std::ostream&, const Error*);
 
 namespace Errors{
+    Error* invalidInputCharacter(const Token* t);
     Error* cannotBeCalled(const Token* t);
     Error* incorrectLHS(const Token* t, Type found, Type required);
     Error* incorrectLHS(const Token* t, Type found, std::string required);

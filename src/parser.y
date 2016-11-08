@@ -9,7 +9,7 @@ using namespace ParseDriver;
 using namespace AST;
 
 extern int yylex();
-void yyerror(const char *msg){ pushError(msg); }
+void yyerror(const char *msg){ parseError(msg); }
 %}
 
 %no-lines
