@@ -196,6 +196,7 @@ params : paramList   { $$ = Siblings(*($1)); delete $1; }
        ;
 
 paramList : paramList ';' paramTypeList { yyerrok; $$ = $1->addAll($3); delete $3; }
+          | paramTypeList
           | paramTypeList ';' error { }
           | error { }
           ;
@@ -223,6 +224,7 @@ paramTypeList : typeSpecifier paramIdList
               ;
 
 paramIdList : paramIdList ',' paramId { yyerrok; $$ = $1->add($3); }
+            | paramId                 { $$ = (new listof<IdComp>())->add($1); }
             | paramIdList ',' error   { }
             | error                   { }
             ;
