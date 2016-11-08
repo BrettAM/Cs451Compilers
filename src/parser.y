@@ -91,7 +91,7 @@ declarationList : declarationList declaration { $$ = $1->addAll($2); delete $2; 
 declaration : varDeclaration
             | funDeclaration { $$ = (new listof<Node*>)->add($1); }
             | recDeclaration { $$ = (new listof<Node*>)->add($1); }
-            | error { }
+            | error          { $$ = (new listof<Node*>); }
             ;
 
 recDeclaration : RECORD ID '{' localDeclarations '}'
@@ -123,8 +123,8 @@ varDeclaration : typeSpecifier varDeclList ';'
           }
           $$ = nodelist;
         }
-               | error varDeclList ';' {  }
-               | typeSpecifier error ';' { yyerrok; }
+               | error varDeclList ';' { $$ = new listof<Node*>(); }
+               | typeSpecifier error ';' { yyerrok; $$ = new listof<Node*>(); }
                ;
 
 scopedVarDeclaration : scopedTypeSpecifier varDeclList ';'
@@ -147,14 +147,14 @@ scopedVarDeclaration : scopedTypeSpecifier varDeclList ';'
           }
           $$ = nodelist;
         }
-                     | error varDeclList ';' { yyerrok; }
-                     | scopedTypeSpecifier error ';' { yyerrok; }
+                     | error varDeclList ';' { yyerrok; $$ = new listof<Node*>(); }
+                     | scopedTypeSpecifier error ';' { yyerrok; $$ = new listof<Node*>(); }
                      ;
 
 varDeclList : varDeclList ',' varDeclInitialize { yyerrok; $$ = $1->add($3); }
             | varDeclInitialize                 { $$ = (new listof<IdComp>())->add($1); }
-            | varDeclList ',' error             { }
-            | error                             { }
+            | varDeclList ',' error             { $$ = (new listof<IdComp>()); }
+            | error                             { $$ = (new listof<IdComp>()); }
             ;
 
 varDeclInitialize : varDeclId
@@ -165,7 +165,7 @@ varDeclInitialize : varDeclId
 
 varDeclId : ID                  { IdComp x = {$1, -1, NULL}; $$ = x; }
           | ID '[' NUMCONST ']' { IdComp x = {$1, ((NumConst*)$3)->value, NULL}; $$ = x; }
-          | ID '[' error        { }
+          | ID '[' error        { IdComp x = {$1, -1, NULL}; $$ = x; }
           | error ']'           { yyerrok; }
           ;
 
