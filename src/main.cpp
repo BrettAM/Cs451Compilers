@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
     vector<Error*> errors = errorList;
 
     // untagged print
-    if(printTree){
+    if(!r.getErrorFlag() && printTree){
         cout << r.getAST()->formatTree(false);
     }
 
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
     }
 
     // tagged print
-    if(printTypedTree){
+    if(!r.getErrorFlag() && printTypedTree){
         cout << r.getAST()->formatTree(true);
     }
 
@@ -77,7 +77,9 @@ int main(int argc, char *argv[]) {
     cout << "Number of warnings: " << warningCount << endl;
     cout << "Number of errors: " << errorCount << endl;
 
-    r.cleanup();
+    // syntax errors lead to malformed trees, so deleting it is perilous
+    if(!r.getErrorFlag()) r.cleanup();
+
     for(size_t i=0; i<semErrors.size(); i++) delete semErrors[i];
     if(input != stdin) fclose(input);
     return 0;

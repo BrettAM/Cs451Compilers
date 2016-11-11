@@ -30,6 +30,7 @@ std::vector<Node*> AST::scrubLeaves(const std::vector<Node*>& nodes){
         itr != nodes.end();
         ++itr)
       {
+        if( *itr == NULL ) ;
         if( dynamic_cast<LeafNode const *>(*itr) == NULL )
             result.push_back(*itr);
         else
