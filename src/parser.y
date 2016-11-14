@@ -387,7 +387,7 @@ immutable : '(' expression ')' { yyerrok; $$ = $2; }
           | call
           | constant { $$ = ConstNode($1); }
           | '(' error { errTr("immutable1"); }
-          | error ')' { errTr("immutable2"); }
+          | error ')' { yyerrok; errTr("immutable2"); }
           ;
 
 call : ID '(' args ')' { $$ = CallNode($1, $3); }
