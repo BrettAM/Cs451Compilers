@@ -11,8 +11,9 @@ using namespace ParseDriver;
 using namespace AST;
 using namespace std;
 extern int yylex();
-void yyerror(const char *msg){ parseError(msg); }
-void errTr(const char *msg){ /*cerr << msg << endl;*/ }
+bool errorFlag = false;
+void yyerror(const char *msg){ parseError(msg); errorFlag=true; }
+void errTr(const char *msg){ /*cerr << msg << endl;*/ errorFlag=true; }
 %}
 
 %no-lines
@@ -86,7 +87,7 @@ void errTr(const char *msg){ /*cerr << msg << endl;*/ }
 %type <token> assignOp
 %%
 
-program : declarationList { rootAST(Siblings(*($1))); delete $1;} ;
+program : declarationList { if(!errorFlag) { rootAST(Siblings(*($1))); } delete $1;} ;
 
 declarationList : declarationList declaration { $$ = $1->addAll($2); delete $2; }
                 | declaration { $$ = $1; }
@@ -202,7 +203,7 @@ params : paramList   { $$ = Siblings(*($1)); delete $1; }
 paramList : paramList ';' paramTypeList { yyerrok; $$ = $1->addAll($3); delete $3; }
           | paramTypeList
           | paramTypeList ';' error { errTr("paramList1"); }
-          | error { errTr("paramList2"); }
+          | error { errTr("paramList2"); $$ = (new listof<Node *>()); }
           ;
 
 paramTypeList : typeSpecifier paramIdList
@@ -224,13 +225,13 @@ paramTypeList : typeSpecifier paramIdList
                     );
                   }
                 }
-              | typeSpecifier error { errTr("paramTypeList1"); }
+              | typeSpecifier error { errTr("paramTypeList1"); $$ = (new listof<Node *>()); }
               ;
 
 paramIdList : paramIdList ',' paramId { yyerrok; $$ = $1->add($3); }
             | paramId                 { $$ = (new listof<IdComp>())->add($1); }
-            | paramIdList ',' error   { errTr("paramIDList1"); }
-            | error                   { errTr("paramIDList2"); }
+            | paramIdList ',' error   { errTr("paramIDList1"); $$ = $1; }
+            | error                   { errTr("paramIDList2"); $$ = (new listof<IdComp>()); }
             ;
 
 paramId : ID         { IdComp x = {$1, -1, NULL}; $$ = x; }

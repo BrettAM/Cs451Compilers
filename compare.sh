@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./c- ./assignmentData/$1.c- | diff assignmentData/$1.out -
+./c- -P ./assignmentData/$1.c- | diff assignmentData/$1.out -
