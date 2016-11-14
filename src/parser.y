@@ -13,7 +13,7 @@ using namespace std;
 extern int yylex();
 bool errorFlag = false;
 void yyerror(const char *msg){ parseError(msg); errorFlag=true; }
-void errTr(const char *msg){ /*cerr << msg << endl;*/ errorFlag=true; }
+void errTr(const char *msg){ cerr << msg << endl; errorFlag=true; }
 %}
 
 %no-lines

@@ -6,7 +6,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string>
+#include <vector>
+#include <map>
+#include <algorithm>
 #include "TextUtils.hpp"
+#include "ParseDefines.hpp"
 #include "Token.hpp"
 
 namespace Mangler{
