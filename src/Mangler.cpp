@@ -5,11 +5,12 @@ using namespace std;
 namespace{
     bool printQuotes(const Token* t){
         char c = t->text[0];
-        if(t->token == ID || t->token == BOOLCONST || t->token == CHARCONST)
+        if(t->token == ID || t->token == BOOLCONST)
             return true;
+        if(c=='\'' || c=='\"')
+            return false;
         if( (c >= 'a' && c <= 'z') ||  (c >= 'A' && c<= 'Z'))
             return false;
-
         return true;
     }
 

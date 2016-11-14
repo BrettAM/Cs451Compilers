@@ -13,7 +13,7 @@ using namespace std;
 extern int yylex();
 bool errorFlag = false;
 void yyerror(const char *msg){ parseError(msg); errorFlag=true; }
-void errTr(const char *msg){ cerr << msg << endl; errorFlag=true; }
+void errTr(const char *msg){ /*cerr << msg << endl;*/ errorFlag=true; }
 %}
 
 %no-lines
@@ -202,7 +202,7 @@ params : paramList   { $$ = Siblings(*($1)); delete $1; }
 
 paramList : paramList ';' paramTypeList { yyerrok; $$ = $1->addAll($3); delete $3; }
           | paramTypeList
-          | paramTypeList ';' error { errTr("paramList1"); }
+          | paramList ';' error { errTr("paramList1"); }
           | error { errTr("paramList2"); $$ = (new listof<Node *>()); }
           ;
 
