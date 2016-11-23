@@ -23,7 +23,7 @@ namespace{
             while(*end != ' ' && *end != '\0')
                 end++;
             index++;
-            if(index >= 5 && index%2 == 0) {
+            if(index >= 3 && index%2 == 0) {
                 items.push_back(string(word, end-word));
             }
             word = end;
@@ -74,24 +74,30 @@ namespace{
 }
 
 std::string Mangler::mangleErrorString(const char* bisonMsg, const Token* lastToken){
-    std::ostringstream tmp;
-    tmp << "Syntax error, unexpected ";
-    switch(lastToken->token){
-        case ID:        tmp << "identifier "; break;
-        case BOOLCONST: tmp << "Boolean constant "; break;
-        case NUMCONST:  tmp << "numeric constant "; break;
-        case CHARCONST: tmp << "character constant "; break;
-    }
-    if(printQuotes(lastToken)) tmp << "\'" << lastToken->text << "\'";
-    else tmp << lastToken->text;
-
     //map and sort expected items
     vector<string> expected;
     breakoutItems(bisonMsg, expected);
+    string found = expected[0];
+    expected.erase(expected.begin());
     for(size_t i=0; i<expected.size(); i++){
         expected[i] = simplify(expected[i]);
     }
     sort(expected.begin(), expected.end());
+
+    std::ostringstream tmp;
+    tmp << "Syntax error, unexpected ";
+    if(found != "$end"){
+        switch(lastToken->token){
+            case ID:        tmp << "identifier "; break;
+            case BOOLCONST: tmp << "Boolean constant "; break;
+            case NUMCONST:  tmp << "numeric constant "; break;
+            case CHARCONST: tmp << "character constant "; break;
+        }
+        if(printQuotes(lastToken)) tmp << "\'" << lastToken->text << "\'";
+        else tmp << lastToken->text;
+    } else {
+        tmp << "end of input";
+    }
 
     for(size_t i=0; i<expected.size(); i++){
         if(i == 0){
