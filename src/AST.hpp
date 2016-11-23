@@ -3,6 +3,7 @@
 
 #include "Token.hpp"
 #include "Type.hpp"
+#include "Location.hpp"
 #include <list>
 #include <vector>
 
@@ -60,6 +61,7 @@ namespace AST{
     class Node {
     public:
         Type type;
+        Location location;
 
         const Token * token;
         virtual ~Node(){};
@@ -133,9 +135,9 @@ namespace AST{
     protected:
         std::vector<Node*> children;
         Node(const Token* token)
-            : type(Type::NONE), token(token), children() {}
+            : type(Type::NONE), location(), token(token), children() {}
         Node(const Token* token, const std::vector<Node*>& children)
-            : type(Type::NONE), token(token), children(scrubNulls(children)) {
+            : type(Type::NONE), location(), token(token), children(scrubNulls(children)) {
         }
         virtual bool equals(const Node& n) const {
             bool tokensEqual = (token == NULL && n.token == NULL) ||
