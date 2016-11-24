@@ -46,6 +46,7 @@ int main(int argc, char *argv[]) {
 
     vector<Error*> semErrors;
     AST::listof<Error*> errorList;
+    int endOfGlobalSpace = 0;
     errorList.addAll(r.getErrors());
 
     // if there are no syntax errors, run semantic analysis
@@ -53,7 +54,7 @@ int main(int argc, char *argv[]) {
         semErrors = Semantics::analyze(r.getAST());
         errorList.addAll(&semErrors);
 
-        CodeGen::calculateLocations(r.getAST());
+        endOfGlobalSpace = CodeGen::calculateLocations(r.getAST());
     }
     vector<Error*> errors = errorList;
 
@@ -77,6 +78,7 @@ int main(int argc, char *argv[]) {
     for(size_t i=0; i<errors.size(); i++)
         ((errors[i]->isWarning())? warningCount : errorCount) += 1;
 
+    cout << "Offset for end of global space: " << endOfGlobalSpace << endl;
     cout << "Number of warnings: " << warningCount << endl;
     cout << "Number of errors: " << errorCount << endl;
 

@@ -12,8 +12,9 @@ namespace CodeGen{
     /**
      * Traverse the input tree, upating the tree node's
      *   `location` field with a calculated runtime location
+     *   returns the offset for the end of the global space
      */
-    void calculateLocations(AST::Node* tree);
+    int calculateLocations(AST::Node* tree);
 }
 
 #endif

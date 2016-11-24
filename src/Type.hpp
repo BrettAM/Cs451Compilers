@@ -50,6 +50,7 @@ public:
     bool isStatic() const { return _static; }
     bool isFunction() const { return _func; }
     int arrayLength() const { return _array; }
+    int size() const { return (isArray())? _array+1 : 1; }
     const cstr rawString() const { return raw; }
     /**
      * Return a sentence predicate that qualifies a prefixed id name as this
