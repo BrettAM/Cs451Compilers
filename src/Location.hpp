@@ -14,6 +14,7 @@ public:
         hidden(true) {}
     Location(RefClass ref, int size, int location):
         hidden(false), ref(ref), size(size), location(location) {}
+    int getSize() { return size; }
     std::string textBox() const {
         if(hidden) return "";
 

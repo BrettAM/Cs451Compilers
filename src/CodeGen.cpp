@@ -34,7 +34,7 @@ int CodeGen::calculateLocations(AST::Node* tree){
             int memStart = *memorySpace;
             *memorySpace -= data.size();
 
-            return Location(ref, data.size(), memStart);
+            return Location(ref, data.size(), memStart-data.offset());
         }
 
         Location allocateParameter(Type data){
@@ -57,14 +57,21 @@ int CodeGen::calculateLocations(AST::Node* tree){
                     e->location = (goodDecl)? allocate(e->type) : badLocation;
                 } break;
                 case PARAMETER:{
+                    table.add(e->token->text, e);
                     e->location = allocateParameter(e->type);
                 } break;
                 case FUNCTIONDECL:{
+                    table.add(e->token->text, e);
                     table.enter(n);
                     containingFunc = e;
                     localPtr = -2;
                 } break;
-                //case CALL:
+                case CALL:{
+                    Node* def = table.lookup(e->token->text);
+                    e->location = (def != NULL)
+                        ? Location(Location::NONE, def->location.getSize(), 0)
+                        : badLocation;
+                } break;
                 case VALUE:{
                     if(e->token->token != ID) break;
                     Node* def = table.lookup(e->token->text);
