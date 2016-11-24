@@ -61,7 +61,7 @@ public:
         if(isArray()){
             oss << " is array";
         }
-        oss << " of type " << raw;
+        oss << " " /*"of type " << raw*/;
         return oss.str();
     }
     std::string toString() const {

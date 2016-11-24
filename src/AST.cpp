@@ -84,7 +84,7 @@ namespace Printers {
         LabelAndTypePrinter(cstr label): label(label) {}
     protected:
         void print(const Element* n, std::ostringstream& s){
-            s << label << n->token->nodeLabel() << " " ;//n->type.predicate();
+            s << label << n->token->nodeLabel() << n->type.predicate();
         }
     };
     class FuncDeclPrinter : public PrintStyle {
