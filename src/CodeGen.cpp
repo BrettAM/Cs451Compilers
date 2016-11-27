@@ -47,7 +47,6 @@ int CodeGen::calculateLocations(AST::Node* tree){
             Element* e = dynamic_cast<Element *>(n);
             if(e == NULL) return; // not an element node
 
-            // if nothing sets its location, it should be none/error
             switch(e->nodeType){
                 case COMPOUND: {
                     table.enter(n);
@@ -57,8 +56,10 @@ int CodeGen::calculateLocations(AST::Node* tree){
                     e->location = (goodDecl)? allocate(e->type) : badLocation;
                 } break;
                 case PARAMETER:{
-                    table.add(e->token->text, e);
-                    e->location = allocateParameter(e->type);
+                    bool goodDecl = table.add(e->token->text, e);
+                    e->location = (goodDecl)
+                        ? allocateParameter(e->type)
+                        : Location(Location::PARAMETER, 1, 0);
                 } break;
                 case FUNCTIONDECL:{
                     table.add(e->token->text, e);

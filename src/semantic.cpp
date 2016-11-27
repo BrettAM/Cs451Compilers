@@ -285,7 +285,9 @@ std::vector<Error*> Semantics::analyze(AST::Node* root){
                  * Leave a function, check for no return warnings
                  */
                 case FUNCTIONDECL:{
-                    if(!returnedFromYet && containingFunc->type != Type::VOID){
+                    if(!returnedFromYet
+                       && containingFunc->type != Type::VOID
+                       && e->token->line >=0) {
                         errors.push_back(
                             Errors::missingReturnStatement(
                                 e->token,

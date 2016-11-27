@@ -19,7 +19,7 @@ OUTPUTTAR?=BrettAM.tar
 
 NAME?=menzies
 SUBMITURL?="http://ec2-52-89-93-46.us-west-2.compute.amazonaws.com/cgi-bin/fileCapture.py"
-ASSIGNMENT?=5
+ASSIGNMENT?=6
 ASSIGNMENT_STRING:=CS445 F16 Assignment $(ASSIGNMENT)
 
 MAIN := $(SDIR)/main.cpp
@@ -49,7 +49,7 @@ test: init $(TOBJS) $(OBJS)
 $(ODIR)/%.o: $(TDIR)/%.cpp $(HPPS)
 	$(CC) $(TESTFLAGS) $(INC) $(TESTLIB) -c -o $@ $<
 
-tar: test
+tar:
 	tar -cf $(OUTPUTTAR) ./makefile ./src
 
 clean:
