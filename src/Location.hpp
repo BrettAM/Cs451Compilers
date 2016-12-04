@@ -11,7 +11,7 @@
 
 class MemoryRef{
 public:
-    enum MemoryRegion { PROGRAM, REGISTER, DATA } region;
+    enum MemoryRegion { PROGRAM, DATA } region;
     int offset;
     int registr;
 private:
@@ -23,9 +23,6 @@ public:
     }
     static MemoryRef Data(int offset, int registerNumber){
         return MemoryRef(DATA, offset, registerNumber);
-    }
-    static MemoryRef Register(int registerNumber){
-        return MemoryRef(REGISTER, 0, registerNumber);
     }
     bool operator==(const MemoryRef& r) const {
         return region == r.region && offset == r.offset && registr == r.registr;
@@ -51,11 +48,11 @@ private:
     Location* reference;
 public:
     Location():
-        bound(FREE), value(MemoryRef::Register(-1)), reference(NULL){}
+        bound(FREE), value(MemoryRef::Data(-1,-1)), reference(NULL){}
     Location(MemoryRef value):
         bound(VALUE), value(value), reference(NULL) {}
     Location(Location* reference):
-        bound(REFERENCE), value(MemoryRef::Register(-1)), reference(reference){}
+        bound(REFERENCE), value(MemoryRef::Data(-1,-1)), reference(reference){}
     void bind(MemoryRef loc){
         if(bound != FREE) throw AlreadyBoundException();
         bound = VALUE;
@@ -66,7 +63,7 @@ public:
         bound = REFERENCE;
         reference = ref;
     }
-    MemoryRef lookup(){
+    MemoryRef lookup() const {
         switch(bound){
             case VALUE:
                 return value;
