@@ -11,10 +11,10 @@ using namespace std;
 using namespace ParseDriver;
 
 int main(int argc, char *argv[]) {
-    bool printTree = false, printTypedTree = false;
+    bool printTree = false, printTypedTree = false, printTokens = false;
 
     char c;
-    while ((c = getopt (argc, argv, "dpP")) != -1)
+    while ((c = getopt (argc, argv, "dpPT")) != -1)
         switch (c) {
             case 'd':
                 ParseDriver::enableDebug();
@@ -24,6 +24,10 @@ int main(int argc, char *argv[]) {
                 break;
             case 'P':
                 printTypedTree = true;
+                break;
+            case 'T':
+                printTokens = true;
+                break;
             default:
                 break;
         }
@@ -56,6 +60,14 @@ int main(int argc, char *argv[]) {
         CodeGen::calculateLocations(r.getAST());
     }
     vector<Error*> errors = errorList;
+
+    // Token print
+    if(printTokens){
+        const std::vector<const Token*>* tokens = r.getTokens();
+        for(size_t i=0; i<tokens->size(); i++){
+            cout << tokens->at(i) << endl;
+        }
+    }
 
     // untagged print
     if(!r.getErrorFlag() && printTree){
