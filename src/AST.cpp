@@ -185,6 +185,12 @@ Node* AST::BreakNode(const Token* t){
     e->type = Type::VOID;
     return e;
 }
+Node* AST::ASMNode(const Token* t){
+    static LabelPrinter printer("ASM");
+    Element* e = new Element(ASM, &printer, t, listof<Node*>());
+    e->type = Type::VOID;
+    return e;
+}
 Node* AST::Siblings(std::vector<Node*> sibs){
     // empty sibling lists should be omitted from the tree
     if(sibs.size() == 0) return Leaf();

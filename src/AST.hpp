@@ -204,6 +204,7 @@ namespace AST{
         FUNCTIONDECL,
         CALL,
         OPERATION,
+        ASM,
         CONTROL,
         COMPOUND,
         BREAK,
@@ -245,6 +246,7 @@ namespace AST{
     Node* WhileNode(const Token* t, Node* cond, Node* stmts);
     Node* ReturnNode(const Token* t, Node* expr);
     Node* BreakNode(const Token* t);
+    Node* ASMNode(const Token* t);
     Node* Siblings(std::vector<Node*> sibs);
     Node* Leaf();
 }

@@ -41,6 +41,7 @@ using namespace ParseDriver;
 "not"            { setlval(new Token(NOT, yylineno, yytext)); }
 "and"            { setlval(new Token(AND, yylineno, yytext)); }
 "or"             { setlval(new Token(OR, yylineno, yytext)); }
+\`[^\`]*\`       { setlval(new Token(ASMLINE, yylineno, yytext)); }
 ("true"|"false") { setlval(new BoolConst(BOOLCONST, yylineno, yytext)); }
 [\(\)\[\]\{\}\;\=\<\>\+\-\*\/\%\?\.\,\:] {
                    setlval(new Token(yytext[0], yylineno, yytext)); }

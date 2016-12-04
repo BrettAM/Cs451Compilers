@@ -35,6 +35,7 @@ void errTr(const char *msg){ /*cerr << msg << endl;*/ errorFlag=true; }
   IF ELSE WHILE RETURN BREAK
   NOTEQ MULASS INC ADDASS DEC SUBASS DIVASS LESSEQ EQ GRTEQ NOT AND OR
   MISPLACED
+  ASMLINE
   '(' ')' '[' ']' '{' '}' '<' '>'
   ';' '=' '+' '-' '*' '/' '%' '?' '.' ',' ':'
 
@@ -296,6 +297,7 @@ statementList : statementList statement { $$ = $1->add($2); }
               ;
 
 expressionStmt : expression ';' { yyerrok; }
+               | ASMLINE ';' { $$ = ASMNode($1); }
                | ';' { yyerrok; $$ = Leaf(); }
                ;
 
