@@ -2,6 +2,5 @@
 
 using namespace std;
 
-void CodeGen::calculateLocations(AST::Node* tree){
-    //noop
+void CodeGen::generate(AST::Node* tree, FILE* output){
 }

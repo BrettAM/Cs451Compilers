@@ -56,8 +56,6 @@ int main(int argc, char *argv[]) {
     if(!r.getErrorFlag()) {
         semErrors = Semantics::analyze(r.getAST());
         errorList.addAll(&semErrors);
-
-        CodeGen::calculateLocations(r.getAST());
     }
     vector<Error*> errors = errorList;
 

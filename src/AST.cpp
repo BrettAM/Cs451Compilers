@@ -48,7 +48,7 @@ std::string PrintStyle::toString(const Element* n, bool types){
     std::ostringstream oss;
     this->print(n, oss);
     if(types){
-        oss << " " << n->location.textBox() << n->type.typeBox();
+        oss << " " << n->type.typeBox();
     }
     oss << " " << n->token->lineBox();
     return oss.str();

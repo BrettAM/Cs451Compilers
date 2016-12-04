@@ -1,41 +1,82 @@
 #ifndef LOCATION_H
 #define LOCATION_H
 
+#include <assert.h>
+#include <exception>
 #include <iostream>
 #include <sstream>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string>
 
-class Location{
+class MemoryRef{
 public:
-    enum RefClass {NONE, GLOBAL, STATIC, PARAMETER, LOCAL};
-    Location():
-        hidden(true) {}
-    Location(RefClass ref, int size, int location):
-        hidden(false), ref(ref), size(size), location(location) {}
-    std::string textBox() const {
-        if(hidden) return "";
-
-        std::ostringstream oss;
-        oss << "[ref: ";
-        switch(ref){
-            case NONE:      oss << "None"; break;
-            case GLOBAL:    oss << "Global"; break;
-            case STATIC:    oss << "Static"; break;
-            case PARAMETER: oss << "Param"; break;
-            case LOCAL:     oss << "Local"; break;
-        }
-        oss << ", size: " << size;
-        oss << ", loc: " << location;
-        oss << "] ";
-        return oss.str();
-    }
+    enum MemoryRegion { PROGRAM, REGISTER, DATA } region;
+    int offset;
+    int registr;
 private:
-    bool hidden;
-    RefClass ref;
-    int size;
-    int location;
+    MemoryRef(MemoryRegion mr, int of, int rg):
+        region(mr), offset(of), registr(rg) { }
+public:
+    static MemoryRef Program(int offset, int registerNumber){
+        return MemoryRef(PROGRAM, offset, registerNumber);
+    }
+    static MemoryRef Data(int offset, int registerNumber){
+        return MemoryRef(DATA, offset, registerNumber);
+    }
+    static MemoryRef Register(int registerNumber){
+        return MemoryRef(REGISTER, 0, registerNumber);
+    }
+    bool operator==(const MemoryRef& r) const {
+        return region == r.region && offset == r.offset && registr == r.registr;
+    }
 };
+
+struct AlreadyBoundException : public std::exception {
+    const char * what () const throw () {
+        return "C++ Exception";
+    }
+};
+
+struct NotYetBoundException : public std::exception {
+   const char * what () const throw () {
+      return "Attempt to lookup an unbound location";
+   }
+};
+
+class Location{
+private:
+    enum BindState { FREE, VALUE, REFERENCE } bound;
+    MemoryRef value;
+    Location* reference;
+public:
+    Location():
+        bound(FREE), value(MemoryRef::Register(-1)), reference(NULL){}
+    Location(MemoryRef value):
+        bound(VALUE), value(value), reference(NULL) {}
+    Location(Location* reference):
+        bound(REFERENCE), value(MemoryRef::Register(-1)), reference(reference){}
+    void bind(MemoryRef loc){
+        if(bound != FREE) throw AlreadyBoundException();
+        bound = VALUE;
+        value = loc;
+    }
+    void bind(Location* ref){
+        if(bound != FREE) throw AlreadyBoundException();
+        bound = REFERENCE;
+        reference = ref;
+    }
+    MemoryRef lookup(){
+        switch(bound){
+            case VALUE:
+                return value;
+            case REFERENCE:
+                return reference->lookup();
+            default:
+                throw NotYetBoundException();
+        }
+    }
+};
+
 
 #endif

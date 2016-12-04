@@ -9,11 +9,7 @@
 #include "ParseDefines.hpp"
 
 namespace CodeGen{
-    /**
-     * Traverse the input tree, upating the tree node's
-     *   `location` field with a calculated runtime location
-     */
-    void calculateLocations(AST::Node* tree);
+    void generate(AST::Node* tree, FILE* output);
 }
 
 #endif
