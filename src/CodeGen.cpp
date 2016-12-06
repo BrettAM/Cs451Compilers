@@ -37,6 +37,20 @@ namespace{
         void mkFunction(Element* func);
         void mkReturn(int valueRegister);
     };
+
+    void emitASM(GeneratedCode& code, std::string literal){
+        // strip off the ` mark from both end
+        string text = literal.substr(1, literal.size()-2);
+        while(true){
+            size_t lineSplitLoc = text.find(';');
+            if(lineSplitLoc == std::string::npos) {
+                code << Inst::ASM(text);
+                break;
+            }
+            code << Inst::ASM(text.substr(0, lineSplitLoc));
+            text = text.substr(lineSplitLoc+1, text.size()-lineSplitLoc);
+        }
+    }
 }
 
 void CodeGen::generate(Node* tree, ostream& output){
@@ -80,8 +94,8 @@ void CodeGen::generate(Node* tree, ostream& output){
 
     // jump to main
     code << Inst::addConst(RETURNVAL, PC, 1, "store return addr")
-         << Inst::jmp(mainFunc, "Jump to main")
-         << Inst::halt("DONE");
+      << Inst::jmp(mainFunc, "Jump to main")
+      << Inst::halt("DONE");
 
     // Generate code for the functions
     for(size_t i=0; i<functions.size(); i++){
@@ -100,6 +114,27 @@ void GeneratedCode::mkFunction(Element* func){
         emit(Inst::store(RETURNVAL, RETURN_ADDRESS_LOC, "store rtn addr"));
     func->location.bind(start->getLocation());
 
+    class AssemblyGenerator : public Node::Traverser {
+    public:
+        GeneratedCode& code;
+        AssemblyGenerator(GeneratedCode& code): code(code){}
+        void pre(Node * n){}
+        void post(Node * n){
+            Element* e = dynamic_cast<Element *>(n);
+            if(e == NULL) return; // not an element node
+            switch(e->nodeType){
+                /**
+                 * emit asm node contents literally
+                 */
+                case ASM: {
+                    emitASM(code, e->token->text);
+                } break;
+                default: break;
+            }
+        }
+    } ag(*this);
+    func->traverse(ag);
+
     mkReturn(ZEROREG);
 }
 void GeneratedCode::mkReturn(int valueRegister){
@@ -108,3 +143,4 @@ void GeneratedCode::mkReturn(int valueRegister){
       << Inst::load(LOCALFRM, OLD_FRAME_LOC, "pop frame")
       << Inst::move(PC, ACC1, "jump");
 }
+

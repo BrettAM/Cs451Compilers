@@ -70,47 +70,47 @@ std::string Instruction::toString() const {
     emit(oss);
     return oss.str();
 }
-Instruction* Instruction::comment(cstr label, cstr text){
+Instruction* Instruction::comment(string label, string text){
     ostringstream oss;
     oss << "* " << label << text;
     return new Instruction(oss.str());
 }
-Instruction* Instruction::halt(cstr cmt){
+Instruction* Instruction::halt(string cmt){
     return new Instruction("HALT", cmt);
 }
-Instruction* Instruction::nop(cstr cmt){
+Instruction* Instruction::nop(string cmt){
     return new Instruction("NOP", cmt);
 }
-Instruction* Instruction::ASM(cstr data, cstr cmt){
+Instruction* Instruction::ASM(string data, string cmt){
     return new Instruction(data, cmt);
 }
-Instruction* Instruction::alu(Op operation, int r1, int r2, int r3, cstr cmt){
+Instruction* Instruction::alu(Op operation, int r1, int r2, int r3, string cmt){
     return new Instruction(aluOps[operation], cmt, r1, r2, r3);
 }
-Instruction* Instruction::move(int r, int source, cstr cmt){
+Instruction* Instruction::move(int r, int source, string cmt){
     return new Instruction("LDA", cmt, r, MemoryRef::Data(0, source));
 }
-Instruction* Instruction::loadConst(int r, int cnst, cstr cmt){
+Instruction* Instruction::loadConst(int r, int cnst, string cmt){
     return new Instruction("LDC", cmt, r, MemoryRef::Data(cnst));
 }
-Instruction* Instruction::addConst(int r, int source ,int cnst, cstr cmt){
+Instruction* Instruction::addConst(int r, int source ,int cnst, string cmt){
     return new Instruction("LDA", cmt, r, MemoryRef::Data(cnst, source));
 }
-Instruction* Instruction::load(int r, Location l, cstr cmt){
+Instruction* Instruction::load(int r, Location l, string cmt){
     return new Instruction("LD", cmt, r, l);
 }
-Instruction* Instruction::store(int r, Location l, cstr cmt){
+Instruction* Instruction::store(int r, Location l, string cmt){
     return new Instruction("ST", cmt, r, l);
 }
-Instruction* Instruction::jmp(Location l, cstr cmt){
+Instruction* Instruction::jmp(Location l, string cmt){
     return new Instruction("LDC", cmt, PC, l);
 }
-Instruction* Instruction::relJmp(Location l, cstr cmt){
+Instruction* Instruction::relJmp(Location l, string cmt){
     return new Instruction("LDA", cmt, PC, l);
 }
-Instruction* Instruction::jmpNotZero(int testReg, Location l, cstr cmt){
+Instruction* Instruction::jmpNotZero(int testReg, Location l, string cmt){
     return new Instruction("JNZ", cmt, testReg, l);
 }
-Instruction* Instruction::jmpZero(int testReg, Location l, cstr cmt){
+Instruction* Instruction::jmpZero(int testReg, Location l, string cmt){
     return new Instruction("JZR", cmt, testReg, l);
 }

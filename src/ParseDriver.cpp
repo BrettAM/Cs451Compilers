@@ -147,12 +147,12 @@ void ParseDriver::Result::cleanup(){
  *   as being defined on line -1
  */
 const Source ParseDriver::Source::IOLibrary(
-    "int input() { int x; `ASM HERE`; return x; }"
-    "output(int *dummy*) `ASM HERE`;"
-    "bool inputb() { bool x; `ASM HERE`; return x; }"
-    "outputb(bool *dummy*) `ASM HERE`;"
-    "char inputc() { char x; `ASM HERE`; return x; }"
-    "outputc(char *dummy*) `ASM HERE`;"
-    "outnl() `ASM HERE`;"
+    "int input() { int x; `IN 3,3,3;ST 3,-2(1)`; return x; }"
+    "output(int *dummy*) `LD 3,-2(1);OUT 3,3,3`;"
+    "bool inputb() { bool x; `INB 3,3,3;ST 3,-2(1)`; return x; }"
+    "outputb(bool *dummy*) `LD 3,-2(1);OUTB 3,3,3`;"
+    "char inputc() { char x; `INC 3,3,3;ST 3,-2(1)`; return x; }"
+    "outputc(char *dummy*) `LD 3,-2(1);OUTC 3,3,3`;"
+    "outnl() `OUTNL 3,3,3`;"
     ,-1
 );
