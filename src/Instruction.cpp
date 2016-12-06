@@ -30,6 +30,11 @@ const Location* Instruction::getLocation(){
     return &address;
 }
 void Instruction::emit(std::ostream& output) const {
+    if(optype == Comment){
+        output << cmt << endl;
+        return;
+    }
+
     int line = address.lookup().offset;
     output << line << ":\t";
     output << operation << "\t";
@@ -43,13 +48,18 @@ void Instruction::emit(std::ostream& output) const {
         } break;
         default: break;
     }
-    output << "\t" << comment;
+    output << "\t" << cmt;
     output << endl;
 }
 std::string Instruction::toString() const {
     ostringstream oss;
     emit(oss);
     return oss.str();
+}
+Instruction* Instruction::comment(cstr label, cstr text){
+    ostringstream oss;
+    oss << "* " << label << text;
+    return new Instruction(oss.str());
 }
 Instruction* Instruction::halt(cstr cmt){
     return new Instruction("HALT", cmt);

@@ -12,9 +12,14 @@ namespace{
 
     class GeneratedCode {
     public:
+        GeneratedCode(): instructionIndex(0) {}
         vector<Instruction*> code;
+        int instructionIndex;
         Instruction* emit(Instruction* istr){
-            istr->setLocation(code.size());
+            if(!istr->isComment()){
+                istr->setLocation(instructionIndex);
+                instructionIndex++;
+            }
             code.push_back(istr);
             return istr;
         }
@@ -63,10 +68,10 @@ void CodeGen::generate(Node* tree, ostream& output){
 
     // standard header
     code << Inst::loadConst(ZEROREG, 0, "Zero Register")
-         << Inst::load(GLOBALFRM, Mem::Data(0), "global pointer")
-         << Inst::addConst(LOCALFRM, GLOBALFRM, -globalSize, "Frame after globs")
-         << Inst::store(LOCALFRM, Mem::Data(0,LOCALFRM), "old fp at self")
-         << Inst::nop("Init Globals");
+      << Inst::load(GLOBALFRM, Mem::Data(0), "global pointer")
+      << Inst::addConst(LOCALFRM, GLOBALFRM, -globalSize, "Frame after globs")
+      << Inst::store(LOCALFRM, Mem::Data(0,LOCALFRM), "old fp at self")
+      << Inst::comment("Init Globals");
 
     // global setters
     for(size_t i=0; i<globals.size(); i++){
@@ -90,15 +95,16 @@ void CodeGen::generate(Node* tree, ostream& output){
 void GeneratedCode::initGlobal(Element* glob){
 }
 void GeneratedCode::mkFunction(Element* func){
+    emit(Inst::comment("Start of ", func->token->text.c_str()));
     Instruction* start =
-        emit(Inst::store(RETURNVAL, RETURN_ADDRESS_LOC, "stare rtn addr"));
+        emit(Inst::store(RETURNVAL, RETURN_ADDRESS_LOC, "store rtn addr"));
     func->location.bind(start->getLocation());
 
     mkReturn(ZEROREG);
 }
 void GeneratedCode::mkReturn(int valueRegister){
-    emit(Inst::move(RETURNVAL, valueRegister, "Load return value"));
-    emit(Inst::load(ACC1, RETURN_ADDRESS_LOC, "load rtn addr"));
-    emit(Inst::load(LOCALFRM, OLD_FRAME_LOC, "pop frame"));
-    emit(Inst::move(PC, ACC1, "jump"));
+    *this << Inst::move(RETURNVAL, valueRegister, "Load return value")
+      << Inst::load(ACC1, RETURN_ADDRESS_LOC, "load rtn addr")
+      << Inst::load(LOCALFRM, OLD_FRAME_LOC, "pop frame")
+      << Inst::move(PC, ACC1, "jump");
 }

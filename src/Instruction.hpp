@@ -11,20 +11,22 @@
 class Instruction{
 private:
     Location address;
-    cstr operation;
-    cstr comment;
+    std::string operation;
+    std::string cmt;
     int result;
-    enum OpType {RegReg, RegMem, JustOp} optype;
+    enum OpType {RegReg, RegMem, JustOp, Comment} optype;
     int op1, op2;
     Location memory;
-    Instruction(cstr op, cstr comment):
-        operation(op), comment(comment),
+    Instruction(std::string comment):
+        cmt(comment), optype(Comment) {}
+    Instruction(std::string op, std::string comment):
+        operation(op), cmt(comment),
         optype(JustOp) {}
-    Instruction(cstr op, cstr comment, int result, int op1, int op2):
-        operation(op), comment(comment), result(result),
+    Instruction(std::string op, std::string comment, int result, int op1, int op2):
+        operation(op), cmt(comment), result(result),
         optype(RegReg), op1(op1), op2(op2) {}
-    Instruction(cstr op, cstr comment, int result, Location memory):
-        operation(op), comment(comment), result(result),
+    Instruction(std::string op, std::string comment, int result, Location memory):
+        operation(op), cmt(comment), result(result),
         optype(RegMem), memory(memory) {}
 public:
     /**
@@ -41,10 +43,12 @@ public:
      * Return the `emit` text as a string
      */
     std::string toString() const;
+    bool isComment() const { return optype == Comment; }
     enum Op {
         Add, Sub, Mul, Div, And, Or, Xor, Not, Swap, Random,
         LessThan, LessEqual, Equal, NotEqual, GreaterEqual, Greater,
     };
+    static Instruction* comment(cstr label, cstr text = "");
     static Instruction* halt(cstr cmt = "");
     static Instruction* nop(cstr cmt = "");
     static Instruction* ASM(cstr instr, cstr cmt = "");
