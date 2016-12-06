@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <string>
 
+#include "Registers.hpp"
+
 class MemoryRef{
 public:
     enum MemoryRegion { PROGRAM, DATA } region;
@@ -21,8 +23,14 @@ public:
     static MemoryRef Program(int offset, int registerNumber){
         return MemoryRef(PROGRAM, offset, registerNumber);
     }
+    static MemoryRef Program(int offset){
+        return MemoryRef(PROGRAM, offset, ZEROREG);
+    }
     static MemoryRef Data(int offset, int registerNumber){
         return MemoryRef(DATA, offset, registerNumber);
+    }
+    static MemoryRef Data(int offset){
+        return MemoryRef(DATA, offset, ZEROREG);
     }
     bool operator==(const MemoryRef& r) const {
         return region == r.region && offset == r.offset && registr == r.registr;

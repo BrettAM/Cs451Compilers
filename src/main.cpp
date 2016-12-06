@@ -1,3 +1,4 @@
+#include <fstream>
 #include <iostream>
 #include <vector>
 #include <unistd.h>
@@ -9,6 +10,19 @@
 
 using namespace std;
 using namespace ParseDriver;
+
+string makeOutFileName(string filename){
+    size_t pathSplit = filename.find_last_of('/') + 1;
+    size_t typeSplit = filename.find(".c-");
+    // no path, so start from the beginning
+    if(pathSplit==std::string::npos) pathSplit = 0;
+    // no file extension, so use the whole ending
+    if(typeSplit==std::string::npos) typeSplit = filename.size();
+    // Return the base file name with .tm appended
+    ostringstream oss;
+    oss << filename.substr(pathSplit, typeSplit-pathSplit) << ".tm";
+    return oss.str();
+}
 
 int main(int argc, char *argv[]) {
     bool printTree = false, printTypedTree = false, printTokens = false;
@@ -35,7 +49,9 @@ int main(int argc, char *argv[]) {
     argv += optind;
 
     FILE* input = stdin;
+    string filename = "a.c-";
     if(argc == 1){
+        filename = argv[0];
         input = fopen(argv[0], "r");
         if(input == NULL) {
             cout << "ERROR(ARGLIST): source file \""
@@ -58,6 +74,15 @@ int main(int argc, char *argv[]) {
         errorList.addAll(&semErrors);
     }
     vector<Error*> errors = errorList;
+
+    // still no errors; generate code based on this file
+    if(errors.size() == 0){
+        string outfileName = makeOutFileName(filename);
+        ofstream outfile;
+        outfile.open(outfileName.c_str(), ios::out);
+        CodeGen::generate(r.getAST(), outfile);
+        outfile.close();
+    }
 
     // Token print
     if(printTokens){

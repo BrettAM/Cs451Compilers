@@ -24,7 +24,7 @@ namespace{
 }
 
 void Instruction::setLocation(int lineno){
-    address.bind(MemoryRef::Program(lineno, ZERO));
+    address.bind(MemoryRef::Program(lineno));
 }
 void Instruction::emit(std::ostream& output) const {
     int line = address.lookup().offset;
@@ -54,6 +54,9 @@ Instruction Instruction::halt(cstr cmt){
 Instruction Instruction::nop(cstr cmt){
     return Instruction("NOP", cmt);
 }
+Instruction Instruction::ASM(cstr data, cstr cmt){
+    return Instruction(data, cmt);
+}
 Instruction Instruction::alu(Op operation, int r1, int r2, int r3, cstr cmt){
     return Instruction(aluOps[operation], cmt, r1, r2, r3);
 }
@@ -61,7 +64,7 @@ Instruction Instruction::move(int r, int source, cstr cmt){
     return Instruction("LDA", cmt, r, MemoryRef::Data(0, source));
 }
 Instruction Instruction::loadConst(int r, int cnst, cstr cmt){
-    return Instruction("LDC", cmt, r, MemoryRef::Data(cnst, ZERO));
+    return Instruction("LDC", cmt, r, MemoryRef::Data(cnst));
 }
 Instruction Instruction::addConst(int r, int source ,int cnst, cstr cmt){
     return Instruction("LDA", cmt, r, MemoryRef::Data(cnst, source));

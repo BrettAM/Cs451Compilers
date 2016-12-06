@@ -3,20 +3,10 @@
 
 #include "Location.hpp"
 #include "TextUtils.hpp"
+#include "Registers.hpp"
 
 #include <iostream>
 #include <sstream>
-
-enum Registers{
-    GLOBALFRM = 0,
-    LOCALFRM = 1,
-    RETURNVAL = 2,
-    ACC1 = 3,
-    ACC2 = 4,
-    ACC3 = 5,
-    ZERO = 6,
-    PC = 7
-};
 
 class Instruction{
 private:
@@ -56,6 +46,7 @@ public:
     };
     static Instruction halt(cstr cmt = "");
     static Instruction nop(cstr cmt = "");
+    static Instruction ASM(cstr instr, cstr cmt = "");
     static Instruction alu(Op operation, int r1, int r2, int r3, cstr cmt = "");
     static Instruction move(int r, int source, cstr cmt = "");
     static Instruction loadConst(int r, int const, cstr cmt = "");
