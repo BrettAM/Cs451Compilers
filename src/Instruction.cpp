@@ -9,7 +9,7 @@ namespace{
         [Instruction::Mul] = "MUL",
         [Instruction::Div] = "DIV",
         [Instruction::And] = "AND",
-        [Instruction::Or] = "OR ",
+        [Instruction::Or] = "OR",
         [Instruction::Xor] = "XOR",
         [Instruction::Not] = "NOT",
         [Instruction::Swap] = "SWP",
@@ -35,9 +35,18 @@ void Instruction::emit(std::ostream& output) const {
         return;
     }
 
+    ostream::pos_type startp = output.tellp();
     int line = address.lookup().offset;
-    output << line << ":\t";
-    output << operation << "\t";
+
+    // output line number and pad to 5 places
+    output << line << ":";
+    while(output.tellp()-startp < 5) output<<' ';
+
+    // output operation and pad to positon 10
+    output << operation;
+    while(output.tellp()-startp < 10) output<<' ';
+
+    // output arguments
     switch(optype){
         case RegReg:{
             output << result << "," << op1 << "," << op2;
@@ -48,7 +57,12 @@ void Instruction::emit(std::ostream& output) const {
         } break;
         default: break;
     }
-    output << "\t" << cmt;
+
+    //pad to position 20 and output the comment
+    output << ' ';
+    while(output.tellp()-startp < 20) output<<' ';
+    output << cmt;
+
     output << endl;
 }
 std::string Instruction::toString() const {
@@ -83,10 +97,10 @@ Instruction* Instruction::addConst(int r, int source ,int cnst, cstr cmt){
     return new Instruction("LDA", cmt, r, MemoryRef::Data(cnst, source));
 }
 Instruction* Instruction::load(int r, Location l, cstr cmt){
-    return new Instruction("LD ", cmt, r, l);
+    return new Instruction("LD", cmt, r, l);
 }
 Instruction* Instruction::store(int r, Location l, cstr cmt){
-    return new Instruction("ST ", cmt, r, l);
+    return new Instruction("ST", cmt, r, l);
 }
 Instruction* Instruction::jmp(Location l, cstr cmt){
     return new Instruction("LDC", cmt, PC, l);
