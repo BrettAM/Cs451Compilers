@@ -4,29 +4,34 @@ using namespace std;
 using namespace AST;
 
 typedef Instruction Inst;
+typedef MemoryRef Mem;
 
 namespace{
+    const MemoryRef OLD_FRAME_LOC      = Mem::Data(0, LOCALFRM);
+    const MemoryRef RETURN_ADDRESS_LOC = Mem::Data(-1, LOCALFRM);
+
     class GeneratedCode {
     public:
-        vector<Instruction> code;
-        void operator<<(Instruction istr){
-            istr.setLocation(code.size());
+        vector<Instruction*> code;
+        Instruction* emit(Instruction* istr){
+            istr->setLocation(code.size());
             code.push_back(istr);
+            return istr;
+        }
+        GeneratedCode& operator<<(Instruction* istr){
+            emit(istr);
+            return *this;
         }
         void dump(ostream& output){
             for(size_t i=0; i<code.size(); i++){
-                code[i].emit(output);
+                code[i]->emit(output);
+                delete code[i];
             }
         }
+        void initGlobal(Element* glob);
+        void mkFunction(Element* func);
+        void mkReturn(int valueRegister);
     };
-
-    void initGlobal(GeneratedCode& code, Element* glob){
-
-    }
-
-    void mkFunction(GeneratedCode& code, Element* func){
-
-    }
 }
 
 void CodeGen::generate(Node* tree, ostream& output){
@@ -35,19 +40,19 @@ void CodeGen::generate(Node* tree, ostream& output){
     // sort out global defs and function defs, log main's location
     vector<Element*> globals, functions;
     int globalSize = 0;
-    Location mainFunc(MemoryRef::Program(0));
+    Location mainFunc;
     for(int i=0; tree->getChild(i) != NULL; i++){
         Element* e = dynamic_cast<Element *>(tree->getChild(i));
         if(e == NULL) continue;
         switch(e->nodeType){
             case FUNCTIONDECL:
                 functions.push_back(e);
-                //if(e->token->text == "main") mainFunc.bind(&(e->location));
+                if(e->token->text == "main") mainFunc.bind(&(e->location));
                 break;
             case DECLARATION:
                 globals.push_back(e);
                 e->location.bind(
-                    MemoryRef::Data(e->type.offset()-globalSize, GLOBALFRM)
+                    Mem::Data(e->type.offset()-globalSize, GLOBALFRM)
                     );
                 globalSize += e->type.size();
                 break;
@@ -57,27 +62,43 @@ void CodeGen::generate(Node* tree, ostream& output){
     }
 
     // standard header
-    code << Inst::loadConst(ZEROREG, 0, "Zero Register");
-    code << Inst::load(GLOBALFRM, MemoryRef::Data(0), "global pointer");
-    code << Inst::addConst(LOCALFRM, GLOBALFRM, -globalSize, "Frame after globs");
-    code << Inst::store(LOCALFRM, MemoryRef::Data(0,LOCALFRM), "old fp at self");
-    code << Inst::nop("Init Globals");
+    code << Inst::loadConst(ZEROREG, 0, "Zero Register")
+         << Inst::load(GLOBALFRM, Mem::Data(0), "global pointer")
+         << Inst::addConst(LOCALFRM, GLOBALFRM, -globalSize, "Frame after globs")
+         << Inst::store(LOCALFRM, Mem::Data(0,LOCALFRM), "old fp at self")
+         << Inst::nop("Init Globals");
 
     // global setters
     for(size_t i=0; i<globals.size(); i++){
-        initGlobal(code, globals[i]);
+        code.initGlobal(globals[i]);
     }
 
     // jump to main
-    code << Inst::addConst(RETURNVAL, PC, 1, "store return addr");
-    code << Inst::jmp(mainFunc, "Jump to main");
-    code << Inst::halt("DONE");
+    code << Inst::addConst(RETURNVAL, PC, 1, "store return addr")
+         << Inst::jmp(mainFunc, "Jump to main")
+         << Inst::halt("DONE");
 
     // Generate code for the functions
-    for(size_t i=0; i<globals.size(); i++){
-        mkFunction(code, functions[i]);
+    for(size_t i=0; i<functions.size(); i++){
+        code.mkFunction(functions[i]);
     }
 
     // Dump generated code to output
     code.dump(output);
+}
+
+void GeneratedCode::initGlobal(Element* glob){
+}
+void GeneratedCode::mkFunction(Element* func){
+    Instruction* start =
+        emit(Inst::store(RETURNVAL, RETURN_ADDRESS_LOC, "stare rtn addr"));
+    func->location.bind(start->getLocation());
+
+    mkReturn(ZEROREG);
+}
+void GeneratedCode::mkReturn(int valueRegister){
+    emit(Inst::move(RETURNVAL, valueRegister, "Load return value"));
+    emit(Inst::load(ACC1, RETURN_ADDRESS_LOC, "load rtn addr"));
+    emit(Inst::load(LOCALFRM, OLD_FRAME_LOC, "pop frame"));
+    emit(Inst::move(PC, ACC1, "jump"));
 }

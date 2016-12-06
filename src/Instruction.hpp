@@ -32,6 +32,7 @@ public:
      *   instruction; can only be set once.
      */
     void setLocation(int lineno);
+    const Location* getLocation();
     /**
      * Format this instruction for interpretation
      */
@@ -44,19 +45,19 @@ public:
         Add, Sub, Mul, Div, And, Or, Xor, Not, Swap, Random,
         LessThan, LessEqual, Equal, NotEqual, GreaterEqual, Greater,
     };
-    static Instruction halt(cstr cmt = "");
-    static Instruction nop(cstr cmt = "");
-    static Instruction ASM(cstr instr, cstr cmt = "");
-    static Instruction alu(Op operation, int r1, int r2, int r3, cstr cmt = "");
-    static Instruction move(int r, int source, cstr cmt = "");
-    static Instruction loadConst(int r, int const, cstr cmt = "");
-    static Instruction addConst(int r, int source ,int const, cstr cmt = "");
-    static Instruction load(int r, Location l, cstr cmt = "");
-    static Instruction store(int r, Location l, cstr cmt = "");
-    static Instruction jmp(Location l, cstr cmt = "");
-    static Instruction relJmp(Location l, cstr cmt);
-    static Instruction jmpNotZero(int testReg, Location l, cstr cmt = "");
-    static Instruction jmpZero(int testReg, Location l, cstr cmt = "");
+    static Instruction* halt(cstr cmt = "");
+    static Instruction* nop(cstr cmt = "");
+    static Instruction* ASM(cstr instr, cstr cmt = "");
+    static Instruction* alu(Op operation, int r1, int r2, int r3, cstr cmt = "");
+    static Instruction* move(int r, int source, cstr cmt = "");
+    static Instruction* loadConst(int r, int const, cstr cmt = "");
+    static Instruction* addConst(int r, int source ,int const, cstr cmt = "");
+    static Instruction* load(int r, Location l, cstr cmt = "");
+    static Instruction* store(int r, Location l, cstr cmt = "");
+    static Instruction* jmp(Location l, cstr cmt = "");
+    static Instruction* relJmp(Location l, cstr cmt);
+    static Instruction* jmpNotZero(int testReg, Location l, cstr cmt = "");
+    static Instruction* jmpZero(int testReg, Location l, cstr cmt = "");
 };
 
 #endif

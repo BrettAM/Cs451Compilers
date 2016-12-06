@@ -61,15 +61,16 @@ public:
         bound(VALUE), value(value), reference(NULL) {}
     Location(Location* reference):
         bound(REFERENCE), value(MemoryRef::Data(-1,-1)), reference(reference){}
-    void bind(MemoryRef loc){
+    void bind(const MemoryRef& loc){
         if(bound != FREE) throw AlreadyBoundException();
         bound = VALUE;
         value = loc;
     }
-    void bind(Location* ref){
+    void bind(const Location* ref){
         if(bound != FREE) throw AlreadyBoundException();
         bound = REFERENCE;
-        reference = ref;
+        // `reference` is never changed after being bound, so this is safe
+        reference = (Location*) ref;
     }
     MemoryRef lookup() const {
         switch(bound){
