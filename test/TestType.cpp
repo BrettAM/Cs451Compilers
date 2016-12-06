@@ -47,3 +47,7 @@ TEST(PrintStaticArray){
                 Type::BOOL.asArray(0).asStatic().predicate()
                 );
 }
+
+TEST(queryArrayLength){
+    CHECK_EQUAL(31, Type::BOOL.asArray(31).arrayLength());
+}

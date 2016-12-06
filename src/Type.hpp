@@ -9,32 +9,34 @@
 class Type{
 private:
     cstr raw;
-    bool _array, _static, _func;
-    Type(cstr str, bool _array, bool _static):
+    int _array;
+    bool _static, _func;
+    Type(cstr str, int _array, bool _static):
         raw(str), _array(_array), _static(_static), _func(false) {}
-    Type(cstr str, bool _array, bool _static, bool _func):
+    Type(cstr str, int _array, bool _static, bool _func):
         raw(str), _array(_array), _static(_static), _func(_func) {}
+    static const int NON_ARRAY = -1;
 public:
     static const Type INT;
     static const Type BOOL;
     static const Type VOID;
     static const Type CHAR;
     static const Type NONE;
-    static Type RECORD(/*record pointer*/){ return Type("record", false, false); }
+    static Type RECORD(/*record pointer*/){ return Type("record", NON_ARRAY, false); }
     /** Return an array type of length `length` of this type */
     Type asArray(int length) const {
-        assert(!_array); // no arrays of arrays in c-
-        return Type(raw, true, _static);
+        assert(!isArray()); // no arrays of arrays in c-
+        return Type(raw, length, _static);
     }
     /** Return an static type of this type */
     Type asStatic() const {
         return Type(raw, _array, true);
     }
     Type asFunc() const {
-        return Type(raw, false, false, true);
+        return Type(raw, NON_ARRAY, false, true);
     }
     Type returnType() const {
-        return Type(raw, false, false, false);
+        return Type(raw, NON_ARRAY, false, false);
     }
     /**
      * Get a version of this type representing its runtime meaning
@@ -44,9 +46,12 @@ public:
     Type runtime() const {
         return Type(raw, _array, false, _func);
     }
-    bool isArray() const { return _array; }
+    bool isArray() const { return _array >= 0; }
     bool isStatic() const { return _static; }
     bool isFunction() const { return _func; }
+    int arrayLength() const { return _array; }
+    int size() const { return (isArray())? _array+1 : 1; }
+    int offset() const { return (isArray())? 1 : 0; }
     const cstr rawString() const { return raw; }
     /**
      * Return a sentence predicate that qualifies a prefixed id name as this
@@ -54,7 +59,7 @@ public:
      */
     std::string predicate() const {
         std::ostringstream oss;
-        if(_array){
+        if(isArray()){
             oss << " is array";
         }
         oss << " of type " << raw;
@@ -62,14 +67,14 @@ public:
     }
     std::string toString() const {
         std::ostringstream oss;
-        if(_func){
+        if(isFunction()){
             oss << "Function returning ";
         }
-        if(_static){
+        if(isStatic()){
             oss << "static ";
         }
         oss << raw;
-        if(_array){
+        if(isArray()){
             oss << " array";
         }
         return oss.str();
