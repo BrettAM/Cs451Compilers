@@ -34,7 +34,7 @@ namespace{
             }
         }
         void initGlobal(Element* glob);
-        void mkFunction(Element* func);
+        void mkFunction(SymbolTable& table, Element* func);
         void mkReturn(int valueRegister);
     };
 
@@ -59,17 +59,18 @@ void CodeGen::generate(Node* tree, ostream& output){
     // sort out global defs and function defs, log main's location
     vector<Element*> globals, functions;
     int globalSize = 0;
-    Location mainFunc;
+    SymbolTable table;
     for(int i=0; tree->getChild(i) != NULL; i++){
         Element* e = dynamic_cast<Element *>(tree->getChild(i));
         if(e == NULL) continue;
         switch(e->nodeType){
             case FUNCTIONDECL:
                 functions.push_back(e);
-                if(e->token->text == "main") mainFunc.bind(&(e->location));
+                table.add(e->token->text, e);
                 break;
             case DECLARATION:
                 globals.push_back(e);
+                table.add(e->token->text, e);
                 e->location.bind(
                     Mem::Data(e->type.offset()-globalSize, GLOBALFRM)
                     );
@@ -94,12 +95,12 @@ void CodeGen::generate(Node* tree, ostream& output){
 
     // jump to main
     code << Inst::addConst(RETURNVAL, PC, 1, "store return addr")
-      << Inst::jmp(mainFunc, "Jump to main")
+      << Inst::jmp(&(table.lookup("main")->location), "Jump to main")
       << Inst::halt("DONE");
 
     // Generate code for the functions
     for(size_t i=0; i<functions.size(); i++){
-        code.mkFunction(functions[i]);
+        code.mkFunction(table, functions[i]);
     }
 
     // Dump generated code to output
@@ -108,7 +109,8 @@ void CodeGen::generate(Node* tree, ostream& output){
 
 void GeneratedCode::initGlobal(Element* glob){
 }
-void GeneratedCode::mkFunction(Element* func){
+void GeneratedCode::mkFunction(SymbolTable& table, Element* func){
+    emit(Inst::comment("************************************"));
     emit(Inst::comment("Start of ", func->token->text.c_str()));
     Instruction* start =
         emit(Inst::store(RETURNVAL, RETURN_ADDRESS_LOC, "store rtn addr"));
@@ -117,7 +119,10 @@ void GeneratedCode::mkFunction(Element* func){
     class AssemblyGenerator : public Node::Traverser {
     public:
         GeneratedCode& code;
-        AssemblyGenerator(GeneratedCode& code): code(code){}
+        SymbolTable& table;
+        int freeStackSpace;
+        AssemblyGenerator(GeneratedCode& code, SymbolTable& table):
+            code(code), table(table), freeStackSpace(-2) {}
         void pre(Node * n){}
         void post(Node * n){
             Element* e = dynamic_cast<Element *>(n);
@@ -129,10 +134,24 @@ void GeneratedCode::mkFunction(Element* func){
                 case ASM: {
                     emitASM(code, e->token->text);
                 } break;
+                /**
+                 *
+                 */
+                case CALL: {
+                    Location* funcAddr = &(table.lookup(e->token->text)->location);
+                    // ACC3 holds the ghost frame
+                    code << Inst::comment("Jump to ", e->token->text)
+                      << Inst::addConst(ACC3, LOCALFRM, freeStackSpace, "Make ghost frame")
+                      // load parameters
+                      << Inst::store(LOCALFRM, Mem::Data(0, ACC3), "Store local frame")
+                      << Inst::move(LOCALFRM, ACC3, "Swap to ghost frame")
+                      << Inst::addConst(RETURNVAL, PC, 1, "store return addr")
+                      << Inst::jmp(funcAddr, "Jump");
+                } break;
                 default: break;
             }
         }
-    } ag(*this);
+    } ag(*this, table);
     func->traverse(ag);
 
     mkReturn(ZEROREG);
