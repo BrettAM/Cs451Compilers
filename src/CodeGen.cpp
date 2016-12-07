@@ -29,7 +29,14 @@ namespace{
         }
         void dump(ostream& output){
             for(size_t i=0; i<code.size(); i++){
-                code[i]->emit(output);
+                try{
+                    code[i]->emit(output);
+                } catch (NotYetBoundException& e){
+                    cerr << "Attempt to emit an unbound location on line "
+                      << code[i]->getLineNumber()
+                      << endl;
+                    output << "#UNBOUND LOCATION#" << endl;
+                }
                 delete code[i];
             }
         }
@@ -155,6 +162,15 @@ void GeneratedCode::mkFunction(SymbolTable& table, Element* func){
                 /**
                  *
                  */
+                case OPERATION: {
+                    if(e->token->token == '='){
+                        code << Inst::load(ACC1, e->getChild(1)->location, "Load assigned value")
+                          << Inst::store(ACC1, e->getChild(0)->location, "Store assigned value");
+                    }
+                } break;
+                /**
+                 *
+                 */
                 case DECLARATION:
                 case PARAMETER: {
                     table.add(e->token->text, e);
@@ -165,8 +181,13 @@ void GeneratedCode::mkFunction(SymbolTable& table, Element* func){
                  *
                  */
                 case VALUE: {
-                    if(e->token->token == ID) break;
-                    loadConst(e);
+                    if(e->token->token == ID) {
+                        Node * variableDec = table.lookup(e->token->text);
+                        Location* varLocation = &(variableDec->location);
+                        e->location.bind(varLocation);
+                    } else {
+                        loadConst(e);
+                    }
                 } break;
                 /**
                  * emit asm node contents literally
@@ -187,6 +208,7 @@ void GeneratedCode::mkFunction(SymbolTable& table, Element* func){
                       << Inst::move(LOCALFRM, ACC3, "Swap to ghost frame")
                       << Inst::addConst(RETURNVAL, PC, 1, "store return addr")
                       << Inst::jmp(funcAddr, "Jump");
+                    // Store return value
                 } break;
                 default: break;
             }
