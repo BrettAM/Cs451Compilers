@@ -110,6 +110,7 @@ void CodeGen::generate(Node* tree, ostream& output){
 void GeneratedCode::initGlobal(Element* glob){
 }
 void GeneratedCode::mkFunction(SymbolTable& table, Element* func){
+    table.enter(func);
     emit(Inst::comment("************************************"));
     emit(Inst::comment("Start of ", func->token->text.c_str()));
     Instruction* start =
@@ -123,11 +124,50 @@ void GeneratedCode::mkFunction(SymbolTable& table, Element* func){
         int freeStackSpace;
         AssemblyGenerator(GeneratedCode& code, SymbolTable& table):
             code(code), table(table), freeStackSpace(-2) {}
+        MemoryRef allocate(Type var){
+            MemoryRef space = Mem::Data(freeStackSpace-var.offset(), LOCALFRM);
+            freeStackSpace -= var.size();
+            return space;
+        }
+        void loadConst(Element* e){
+            e->location.bind( allocate(e->type) );
+            int value = 0;
+            switch(e->token->token){
+                case BOOLCONST: {
+                    value = ((const BoolConst*) e->token)->value;
+                } break;
+                case CHARCONST: {
+                    value = ((const CharConst*) e->token)->literal;
+                } break;
+                case NUMCONST: {
+                    value = ((const NumConst*) e->token)->value;
+                } break;
+                default: break;
+            }
+            code << Inst::loadConst(ACC1, value, e->token->text);
+            code << Inst::store(ACC1, e->location, "Store constant");
+        }
         void pre(Node * n){}
         void post(Node * n){
             Element* e = dynamic_cast<Element *>(n);
             if(e == NULL) return; // not an element node
             switch(e->nodeType){
+                /**
+                 *
+                 */
+                case DECLARATION:
+                case PARAMETER: {
+                    table.add(e->token->text, e);
+                    e->location.bind(allocate(e->type));
+                    // if declaration, copy initialization value in
+                } break;
+                /**
+                 *
+                 */
+                case VALUE: {
+                    if(e->token->token == ID) break;
+                    loadConst(e);
+                } break;
                 /**
                  * emit asm node contents literally
                  */
@@ -155,6 +195,7 @@ void GeneratedCode::mkFunction(SymbolTable& table, Element* func){
     func->traverse(ag);
 
     mkReturn(ZEROREG);
+    table.exit();
 }
 void GeneratedCode::mkReturn(int valueRegister){
     *this << Inst::move(RETURNVAL, valueRegister, "Load return value")
