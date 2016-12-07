@@ -39,8 +39,9 @@ namespace{
     };
 
     void emitASM(GeneratedCode& code, std::string literal){
-        // strip off the ` mark from both end
+        // strip off the ` mark from both ends
         string text = literal.substr(1, literal.size()-2);
+        // Emit each block seperated by a ';' as an assembly instruction
         while(true){
             size_t lineSplitLoc = text.find(';');
             if(lineSplitLoc == std::string::npos) {
@@ -71,6 +72,7 @@ void CodeGen::generate(Node* tree, ostream& output){
             case DECLARATION:
                 globals.push_back(e);
                 table.add(e->token->text, e);
+                // set the location of the global and keep track of its size
                 e->location.bind(
                     Mem::Data(e->type.offset()-globalSize, GLOBALFRM)
                     );
@@ -116,12 +118,14 @@ void GeneratedCode::mkFunction(SymbolTable& table, Element* func){
         emit(Inst::store(RETURNVAL, RETURN_ADDRESS_LOC, "store rtn addr"));
     func->location.bind(start->getLocation());
 
-    class AssemblyGenerator : public Node::Traverser {
+    // This traverser will visit the AST nodes in this function and
+    // translate them to assembly instructions
+    class StatementListTranslator : public Node::Traverser {
     public:
         GeneratedCode& code;
         SymbolTable& table;
         int freeStackSpace;
-        AssemblyGenerator(GeneratedCode& code, SymbolTable& table):
+        StatementListTranslator(GeneratedCode& code, SymbolTable& table):
             code(code), table(table), freeStackSpace(-2) {}
         void pre(Node * n){}
         void post(Node * n){
