@@ -35,6 +35,7 @@ public:
      */
     void setLocation(int lineno);
     const Location* getLocation();
+    int getLineNumber();
     /**
      * Format this instruction for interpretation
      */
