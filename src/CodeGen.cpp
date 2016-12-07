@@ -37,6 +37,9 @@ namespace{
                       << endl;
                     output << "#UNBOUND LOCATION#" << endl;
                 }
+            }
+
+            for(size_t i=0; i<code.size(); i++){
                 delete code[i];
             }
         }
@@ -200,15 +203,38 @@ void GeneratedCode::mkFunction(SymbolTable& table, Element* func){
                  */
                 case CALL: {
                     Location* funcAddr = &(table.lookup(e->token->text)->location);
-                    // ACC3 holds the ghost frame
+                    MemoryRef returnTemp = allocate(e->type);
+                    e->location.bind(returnTemp);
+                    // setup a phost frame in ACC3
                     code << Inst::comment("Jump to ", e->token->text)
-                      << Inst::addConst(ACC3, LOCALFRM, freeStackSpace, "Make ghost frame")
-                      // load parameters
-                      << Inst::store(LOCALFRM, Mem::Data(0, ACC3), "Store local frame")
+                      << Inst::addConst(ACC3, LOCALFRM, freeStackSpace, "Make ghost frame");
+                    // load parameters (present if e->getChild(0) is a sibling list)
+                    Node* parameterList = e->getChild(0);
+                    if(dynamic_cast<SiblingList*>(parameterList) != NULL){
+                        for(int i=0; parameterList->getChild(i) != NULL; i++){
+                            Node * param = parameterList->getChild(i);
+                            code << Inst::load(ACC1, param->location, "load param")
+                              << Inst::store(ACC1, Mem::Data(-(i+2), ACC3), "set param");
+                        }
+                    }
+                    // Execute call and store return value
+                    code << Inst::store(LOCALFRM, Mem::Data(0, ACC3), "Store local frame")
                       << Inst::move(LOCALFRM, ACC3, "Swap to ghost frame")
                       << Inst::addConst(RETURNVAL, PC, 1, "store return addr")
-                      << Inst::jmp(funcAddr, "Jump");
-                    // Store return value
+                      << Inst::jmp(funcAddr, "Jump")
+                      << Inst::store(RETURNVAL, returnTemp, "Store return value");
+                } break;
+                /**
+                 *
+                 */
+                case RETURNSTMT:{
+                    Node * rtval = e->getChild(0);
+                    int returnReg = ZEROREG;
+                    if(dynamic_cast<Element*>(rtval) != NULL){
+                        code << Inst::load(ACC1, rtval->location, "Load return value");
+                        returnReg = ACC1;
+                    }
+                    code.mkReturn(returnReg);
                 } break;
                 default: break;
             }
@@ -220,7 +246,7 @@ void GeneratedCode::mkFunction(SymbolTable& table, Element* func){
     table.exit();
 }
 void GeneratedCode::mkReturn(int valueRegister){
-    *this << Inst::move(RETURNVAL, valueRegister, "Load return value")
+    *this << Inst::move(RETURNVAL, valueRegister, "set return value")
       << Inst::load(ACC1, RETURN_ADDRESS_LOC, "load rtn addr")
       << Inst::load(LOCALFRM, OLD_FRAME_LOC, "pop frame")
       << Inst::move(PC, ACC1, "jump");
