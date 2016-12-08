@@ -29,6 +29,9 @@ void Instruction::setLocation(int lineno){
 const Location* Instruction::getLocation(){
     return &address;
 }
+int Instruction::getLineNumber(){
+    return address.lookup().offset;
+}
 void Instruction::emit(std::ostream& output) const {
     if(optype == Comment){
         output << cmt << endl;
