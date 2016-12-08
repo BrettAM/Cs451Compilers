@@ -62,6 +62,19 @@ namespace{
             text = text.substr(lineSplitLoc+1, text.size()-lineSplitLoc);
         }
     }
+
+    class StatementListTranslator : public Node::Traverser {
+    public:
+        GeneratedCode& code;
+        SymbolTable& table;
+        int freeStackSpace;
+        StatementListTranslator(GeneratedCode& code, SymbolTable& table):
+            code(code), table(table), freeStackSpace(-2) {}
+        MemoryRef allocate(Type var);
+        void loadConst(Element* e);
+        void pre(Node * n);
+        void post(Node * n);
+    };
 }
 
 void CodeGen::generate(Node* tree, ostream& output){
@@ -131,119 +144,7 @@ void GeneratedCode::mkFunction(SymbolTable& table, Element* func){
 
     // This traverser will visit the AST nodes in this function and
     // translate them to assembly instructions
-    class StatementListTranslator : public Node::Traverser {
-    public:
-        GeneratedCode& code;
-        SymbolTable& table;
-        int freeStackSpace;
-        StatementListTranslator(GeneratedCode& code, SymbolTable& table):
-            code(code), table(table), freeStackSpace(-2) {}
-        MemoryRef allocate(Type var){
-            MemoryRef space = Mem::Data(freeStackSpace-var.offset(), LOCALFRM);
-            freeStackSpace -= var.size();
-            return space;
-        }
-        void loadConst(Element* e){
-            e->location.bind( allocate(e->type) );
-            int value = 0;
-            switch(e->token->token){
-                case BOOLCONST: {
-                    value = ((const BoolConst*) e->token)->value;
-                } break;
-                case CHARCONST: {
-                    value = ((const CharConst*) e->token)->literal;
-                } break;
-                case NUMCONST: {
-                    value = ((const NumConst*) e->token)->value;
-                } break;
-                default: break;
-            }
-            code << Inst::loadConst(ACC1, value, e->token->text);
-            code << Inst::store(ACC1, e->location, "Store constant");
-        }
-        void pre(Node * n){}
-        void post(Node * n){
-            Element* e = dynamic_cast<Element *>(n);
-            if(e == NULL) return; // not an element node
-            switch(e->nodeType){
-                /**
-                 *
-                 */
-                case OPERATION: {
-                    if(e->token->token == '='){
-                        code << Inst::load(ACC1, e->getChild(1)->location, "Load assigned value")
-                          << Inst::store(ACC1, e->getChild(0)->location, "Store assigned value");
-                    }
-                } break;
-                /**
-                 *
-                 */
-                case DECLARATION:
-                case PARAMETER: {
-                    table.add(e->token->text, e);
-                    e->location.bind(allocate(e->type));
-                    // if declaration, copy initialization value in
-                } break;
-                /**
-                 *
-                 */
-                case VALUE: {
-                    if(e->token->token == ID) {
-                        Node * variableDec = table.lookup(e->token->text);
-                        Location* varLocation = &(variableDec->location);
-                        e->location.bind(varLocation);
-                    } else {
-                        loadConst(e);
-                    }
-                } break;
-                /**
-                 * emit asm node contents literally
-                 */
-                case ASM: {
-                    emitASM(code, e->token->text);
-                } break;
-                /**
-                 *
-                 */
-                case CALL: {
-                    Location* funcAddr = &(table.lookup(e->token->text)->location);
-                    MemoryRef returnTemp = allocate(e->type);
-                    e->location.bind(returnTemp);
-                    // setup a phost frame in ACC3
-                    code << Inst::comment("Jump to ", e->token->text)
-                      << Inst::addConst(ACC3, LOCALFRM, freeStackSpace, "Make ghost frame");
-                    // load parameters (present if e->getChild(0) is a sibling list)
-                    Node* parameterList = e->getChild(0);
-                    if(dynamic_cast<SiblingList*>(parameterList) != NULL){
-                        for(int i=0; parameterList->getChild(i) != NULL; i++){
-                            Node * param = parameterList->getChild(i);
-                            code << Inst::load(ACC1, param->location, "load param")
-                              << Inst::store(ACC1, Mem::Data(-(i+2), ACC3), "set param");
-                        }
-                    }
-                    // Execute call and store return value
-                    code << Inst::store(LOCALFRM, Mem::Data(0, ACC3), "Store local frame")
-                      << Inst::move(LOCALFRM, ACC3, "Swap to ghost frame")
-                      << Inst::addConst(RETURNVAL, PC, 1, "store return addr")
-                      << Inst::jmp(funcAddr, "Jump")
-                      << Inst::store(RETURNVAL, returnTemp, "Store return value");
-                } break;
-                /**
-                 *
-                 */
-                case RETURNSTMT:{
-                    Node * rtval = e->getChild(0);
-                    int returnReg = ZEROREG;
-                    if(dynamic_cast<Element*>(rtval) != NULL){
-                        code << Inst::load(ACC1, rtval->location, "Load return value");
-                        returnReg = ACC1;
-                    }
-                    code.mkReturn(returnReg);
-                } break;
-                default: break;
-            }
-        }
-    } ag(*this, table);
+    StatementListTranslator ag(*this, table);
     func->traverse(ag);
 
     mkReturn(ZEROREG);
@@ -256,3 +157,110 @@ void GeneratedCode::mkReturn(int valueRegister){
       << Inst::move(PC, ACC1, "jump");
 }
 
+MemoryRef StatementListTranslator::allocate(Type var){
+    MemoryRef space = Mem::Data(freeStackSpace-var.offset(), LOCALFRM);
+    freeStackSpace -= var.size();
+    return space;
+}
+void StatementListTranslator::loadConst(Element* e){
+    e->location.bind( allocate(e->type) );
+    int value = 0;
+    switch(e->token->token){
+        case BOOLCONST: {
+            value = ((const BoolConst*) e->token)->value;
+        } break;
+        case CHARCONST: {
+            value = ((const CharConst*) e->token)->literal;
+        } break;
+        case NUMCONST: {
+            value = ((const NumConst*) e->token)->value;
+        } break;
+        default: break;
+    }
+    code << Inst::loadConst(ACC1, value, e->token->text);
+    code << Inst::store(ACC1, e->location, "Store constant");
+}
+void StatementListTranslator::pre(Node * n){
+
+}
+void StatementListTranslator::post(Node * n){
+    Element* e = dynamic_cast<Element *>(n);
+    if(e == NULL) return; // not an element node
+    switch(e->nodeType){
+        /**
+         *
+         */
+        case OPERATION: {
+            if(e->token->token == '='){
+                code << Inst::load(ACC1, e->getChild(1)->location, "Load assigned value")
+                  << Inst::store(ACC1, e->getChild(0)->location, "Store assigned value");
+            }
+        } break;
+        /**
+         *
+         */
+        case DECLARATION:
+        case PARAMETER: {
+            table.add(e->token->text, e);
+            e->location.bind(allocate(e->type));
+            // if declaration, copy initialization value in
+        } break;
+        /**
+         *
+         */
+        case VALUE: {
+            if(e->token->token == ID) {
+                Node * variableDec = table.lookup(e->token->text);
+                Location* varLocation = &(variableDec->location);
+                e->location.bind(varLocation);
+            } else {
+                loadConst(e);
+            }
+        } break;
+        /**
+         * emit asm node contents literally
+         */
+        case ASM: {
+            emitASM(code, e->token->text);
+        } break;
+        /**
+         *
+         */
+        case CALL: {
+            Location* funcAddr = &(table.lookup(e->token->text)->location);
+            MemoryRef returnTemp = allocate(e->type);
+            e->location.bind(returnTemp);
+            // setup a phost frame in ACC3
+            code << Inst::comment("Jump to ", e->token->text)
+              << Inst::addConst(ACC3, LOCALFRM, freeStackSpace, "Make ghost frame");
+            // load parameters (present if e->getChild(0) is a sibling list)
+            Node* parameterList = e->getChild(0);
+            if(dynamic_cast<SiblingList*>(parameterList) != NULL){
+                for(int i=0; parameterList->getChild(i) != NULL; i++){
+                    Node * param = parameterList->getChild(i);
+                    code << Inst::load(ACC1, param->location, "load param")
+                      << Inst::store(ACC1, Mem::Data(-(i+2), ACC3), "set param");
+                }
+            }
+            // Execute call and store return value
+            code << Inst::store(LOCALFRM, Mem::Data(0, ACC3), "Store local frame")
+              << Inst::move(LOCALFRM, ACC3, "Swap to ghost frame")
+              << Inst::addConst(RETURNVAL, PC, 1, "store return addr")
+              << Inst::jmp(funcAddr, "Jump")
+              << Inst::store(RETURNVAL, returnTemp, "Store return value");
+        } break;
+        /**
+         *
+         */
+        case RETURNSTMT:{
+            Node * rtval = e->getChild(0);
+            int returnReg = ZEROREG;
+            if(dynamic_cast<Element*>(rtval) != NULL){
+                code << Inst::load(ACC1, rtval->location, "Load return value");
+                returnReg = ACC1;
+            }
+            code.mkReturn(returnReg);
+        } break;
+        default: break;
+    }
+}
