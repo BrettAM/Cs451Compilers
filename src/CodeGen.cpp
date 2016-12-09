@@ -71,9 +71,11 @@ namespace{
         StatementListTranslator(GeneratedCode& code, SymbolTable& table):
             code(code), table(table), freeStackSpace(-2) {}
         MemoryRef allocate(Type var);
+        void computeOperation(int op, int reg, Element* e);
         void loadConst(Element* e);
         void pre(Node * n);
         void post(Node * n);
+        bool assignTypeOp(int op);
     };
 }
 
@@ -162,6 +164,95 @@ MemoryRef StatementListTranslator::allocate(Type var){
     freeStackSpace -= var.size();
     return space;
 }
+bool StatementListTranslator::assignTypeOp(int op){
+    switch(op){
+        case '=':
+        case MULASS:
+        case ADDASS:
+        case SUBASS:
+        case DIVASS:
+            return true;
+        default:
+            return false;
+    }
+}
+/**
+ * leave the value resulting from `op` in `reg`
+ */
+void StatementListTranslator::computeOperation(int op, int result, Element* e){
+    code << Inst::load(ACC1, &(e->getChild(0)->location), "Load operand");
+    if(e->getChild(1) != NULL){
+        code << Inst::load(ACC2, &(e->getChild(1)->location), "Load operand");
+
+        // Binary operators
+        switch(op){
+            case NOTEQ: case NOT: {
+                code << Inst::alu(Inst::Not, result, ACC1, ACC2);
+            } break;
+            case MULASS: case '*': {
+                code << Inst::alu(Inst::Mul, result, ACC1, ACC2);
+            } break;
+            case ADDASS: case '+': {
+                code << Inst::alu(Inst::Add, result, ACC1, ACC2);
+            } break;
+            case SUBASS: case '-': {
+                code << Inst::alu(Inst::Sub, result, ACC1, ACC2);
+            } break;
+            case DIVASS: case '/': {
+                code << Inst::alu(Inst::Div, result, ACC1, ACC2);
+            } break;
+            case AND: {
+                code << Inst::alu(Inst::And, result, ACC1, ACC2);
+            } break;
+            case OR: {
+                code << Inst::alu(Inst::Or, result, ACC1, ACC2);
+            } break;
+            case EQ: {
+                code << Inst::alu(Inst::Equal, result, ACC1, ACC2);
+            } break;
+            case GRTEQ: {
+                code << Inst::alu(Inst::GreaterEqual, result, ACC1, ACC2);
+            } break;
+            case LESSEQ: {
+                code << Inst::alu(Inst::LessEqual, result, ACC1, ACC2);
+            } break;
+            case '<': {
+                code << Inst::alu(Inst::LessThan, result, ACC1, ACC2);
+            } break;
+            case '>': {
+                code << Inst::alu(Inst::Greater, result, ACC1, ACC2);
+            } break;
+            case '=': {
+                code << Inst::move(result, ACC2, "Assignment");
+            } break;
+            case '%': {
+                code << Inst::alu(Inst::Div, ACC3, ACC1, ACC2, "Mod op start")
+                  << Inst::alu(Inst::Mul, ACC3, ACC2, ACC3, "Mod continued")
+                  << Inst::alu(Inst::Sub, result, ACC1, ACC3, "Mod finish");
+            } break;
+            default:
+                cerr << "Unhandled binary op " << e->token->text;
+        }
+    } else {
+        // Unary operators
+        switch(op){
+            case INC: {
+                code << Inst::addConst(result, ACC1, 1);
+            } break;
+            case DEC: {
+                code << Inst::addConst(result, ACC1, -1);
+            } break;
+            case '-': {
+                code << Inst::alu(Inst::Sub, result, ZEROREG, ACC1);
+            } break;
+            case '?': {
+                code << Inst::alu(Inst::Random, result, ACC1, ZEROREG);
+            } break;
+            default:
+                cerr << "Unhandled unary op " << e->token->text;
+        }
+    }
+}
 void StatementListTranslator::loadConst(Element* e){
     e->location.bind( allocate(e->type) );
     int value = 0;
@@ -190,11 +281,18 @@ void StatementListTranslator::post(Node * n){
         /**
          *
          */
+        // handle array references '['
         case OPERATION: {
-            if(e->token->token == '='){
-                code << Inst::load(ACC1, e->getChild(1)->location, "Load assigned value")
-                  << Inst::store(ACC1, e->getChild(0)->location, "Store assigned value");
+            int op = e->token->token;
+            if(assignTypeOp(op)){
+                e->location.bind( &(e->getChild(0)->location) );
+            } else {
+                e->location.bind( allocate(e->type) );
             }
+
+            computeOperation(op, ACC1, e);
+
+            code << Inst::store(ACC1, e->location, "Store computed value");
         } break;
         /**
          *
