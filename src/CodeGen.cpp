@@ -70,8 +70,9 @@ namespace{
         GeneratedCode& code;
         SymbolTable& table;
         int freeStackSpace;
-        StatementListTranslator(GeneratedCode& code, SymbolTable& table):
-            code(code), table(table), freeStackSpace(-2) {}
+        bool allocateDecls;
+        StatementListTranslator(GeneratedCode& code, SymbolTable& table, bool allocateDecls=true):
+            code(code), table(table), freeStackSpace(-2), allocateDecls(allocateDecls) {}
         MemoryRef allocate(Type var);
         void computeOperation(int op, int reg, Element* e);
         void loadConst(Element* e);
@@ -138,6 +139,9 @@ void CodeGen::generate(Node* tree, ostream& output){
 }
 
 void GeneratedCode::initGlobal(Element* glob){
+    SymbolTable emptyTable;
+    StatementListTranslator ag(*this, emptyTable, false);
+    glob->traverse(ag);
 }
 void GeneratedCode::mkFunction(SymbolTable& table, Element* func){
     table.enter(func);
@@ -347,7 +351,9 @@ void StatementListTranslator::post(Element * e){
         } /* FALL THROUGH */
         case PARAMETER: {
             table.add(e->token->text, e);
-            e->location.bind(allocate(e->type));
+            if(this->allocateDecls){
+                e->location.bind(allocate(e->type));
+            }
             // if declaration, copy initialization value in
         } break;
         /**
@@ -383,7 +389,7 @@ void StatementListTranslator::post(Element * e){
             if(dynamic_cast<SiblingList*>(parameterList) != NULL){
                 for(int i=0; parameterList->getChild(i) != NULL; i++){
                     Node * param = parameterList->getChild(i);
-                    code << Inst::load(ACC1, param->location, "load param")
+                    code << Inst::load(ACC1, &(param->location), "load param")
                       << Inst::store(ACC1, Mem::Data(-(i+2), ACC3), "set param");
                 }
             }
