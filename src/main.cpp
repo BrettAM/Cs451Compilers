@@ -75,8 +75,13 @@ int main(int argc, char *argv[]) {
     }
     vector<Error*> errors = errorList;
 
+    // count error/warning totals
+    int errorCount=0, warningCount=0;
+    for(size_t i=0; i<errors.size(); i++)
+        ((errors[i]->isWarning())? warningCount : errorCount) += 1;
+
     // still no errors; generate code based on this file
-    if(errors.size() == 0){
+    if(errorCount == 0){
         string outfileName = makeOutFileName(filename);
         ofstream outfile;
         outfile.open(outfileName.c_str(), ios::out);
@@ -106,11 +111,6 @@ int main(int argc, char *argv[]) {
     if(!r.getErrorFlag() && printTypedTree){
         cout << r.getAST()->formatTree(true);
     }
-
-    // count error/warning totals
-    int errorCount=0, warningCount=0;
-    for(size_t i=0; i<errors.size(); i++)
-        ((errors[i]->isWarning())? warningCount : errorCount) += 1;
 
     cout << "Number of warnings: " << warningCount << endl;
     cout << "Number of errors: " << errorCount << endl;

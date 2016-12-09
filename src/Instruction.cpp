@@ -4,7 +4,7 @@ using namespace std;
 
 namespace{
     cstr aluOps[] = {
-        [Instruction::Add] = "ADD",
+/*        [Instruction::Add] = "ADD",
         [Instruction::Sub] = "SUB",
         [Instruction::Mul] = "MUL",
         [Instruction::Div] = "DIV",
@@ -19,7 +19,9 @@ namespace{
         [Instruction::Equal] = "TEQ",
         [Instruction::NotEqual] = "TNE",
         [Instruction::GreaterEqual] = "TGE",
-        [Instruction::Greater] = "TGT",
+        [Instruction::Greater] = "TGT",*/
+        "ADD","SUB","MUL","DIV","AND","OR","XOR","NOT","SWP","RND",
+        "TLT","TLE","TEQ","TNE","TGE","TGT",
     };
 }
 
