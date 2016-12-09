@@ -251,6 +251,10 @@ void StatementListTranslator::computeOperation(int op, int result, Element* e){
             case DEC: {
                 code << Inst::addConst(result, ACC1, -1);
             } break;
+            case NOT: {
+                code << Inst::loadConst(ACC2, 1, "Load xor mask")
+                  << Inst::alu(Inst::Xor, result, ACC1, ACC2, "Do boolean not");
+            } break;
             case '-': {
                 code << Inst::alu(Inst::Sub, result, ZEROREG, ACC1);
             } break;
