@@ -123,7 +123,7 @@ void CodeGen::generate(Node* tree, ostream& output){
 
     // jump to main
     code << Inst::addConst(RETURNVAL, PC, 1, "store return addr")
-      << Inst::jmp(&(table.lookup("main")->location), "Jump to main")
+      << Inst::jmp(&(table.lookup("main")->codeStart), "Jump to main")
       << Inst::halt("DONE");
 
     // Generate code for the functions
@@ -143,7 +143,7 @@ void GeneratedCode::mkFunction(SymbolTable& table, Element* func){
     emit(Inst::comment("Start of ", func->token->text.c_str()));
     Instruction* start =
         emit(Inst::store(RETURNVAL, RETURN_ADDRESS_LOC, "store rtn addr"));
-    func->location.bind(start->getLocation());
+    func->codeStart.bind(start->getLocation());
 
     // This traverser will visit the AST nodes in this function and
     // translate them to assembly instructions
@@ -276,7 +276,18 @@ void StatementListTranslator::pre(Element * e){
 
 }
 void StatementListTranslator::inorder(Element * e, int index){
-
+    if(e->token->token == IF){
+        switch(index){
+            case 0: { // after test
+                // if tests value is false, jump over case 1
+            } break;
+            case 1: { // after true statement
+                // jump to the end of case 2 if it exists
+            } break;
+            case 2: { // after
+            } break;
+        }
+    }
 }
 void StatementListTranslator::post(Element * e){
     switch(e->nodeType){
@@ -327,7 +338,7 @@ void StatementListTranslator::post(Element * e){
          *
          */
         case CALL: {
-            Location* funcAddr = &(table.lookup(e->token->text)->location);
+            Location* funcAddr = &(table.lookup(e->token->text)->codeStart);
             MemoryRef returnTemp = allocate(e->type);
             e->location.bind(returnTemp);
             // setup a phost frame in ACC3

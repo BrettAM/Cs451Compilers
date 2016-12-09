@@ -60,8 +60,12 @@ namespace AST{
      */
     class Node {
     public:
+        /** Type of the value represented by or returned by this node */
         Type type;
+        /** Location in data space where this nodes value will be stored */
         Location location;
+        /** Location of the first instruction to computer/enter this node */
+        Location codeStart;
 
         const Token * token;
         virtual ~Node(){};
