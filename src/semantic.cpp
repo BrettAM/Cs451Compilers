@@ -64,7 +64,7 @@ namespace Internal {
 using namespace Internal;
 
 std::vector<Error*> Semantics::analyze(AST::Node* root){
-    class Analyzer : public Node::Traverser {
+    class Analyzer : public Node::Traverser<Node> {
     public:
         vector<ParameterContext> parameterContextStack;
         vector<Error*> errors;
@@ -562,7 +562,7 @@ bool Semantics::checkConstness(AST::Node* subtree){
     /**
      * Only references to other IDs can cause a tree to be considered non-const
      */
-    class Traversal : public Node::Traverser {
+    class Traversal : public Node::Traverser<Node> {
     public:
         bool constness;
         Traversal(): constness(true) {}

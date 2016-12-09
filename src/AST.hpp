@@ -98,25 +98,35 @@ namespace AST{
          * Call a pre and/or post method while traversing the tree from
          * this location
          */
+        template <typename NodeSubclass = Node>
         class Traverser {
         public:
             /** Called before a node's children are traversed */
-            virtual void pre(Node *){}
+            virtual void pre(NodeSubclass *){}
+            /**
+             * Called as a node's children are traversed.
+             * Index will be the index of the node just finished being
+             *   traversed.
+             */
+            virtual void inorder(NodeSubclass *, int index){}
             /** Called after a node's children are traversed */
-            virtual void post(Node *){}
+            virtual void post(NodeSubclass *){}
         };
-        void traverse(Traverser& t){
-            t.pre(this);
+        template <typename NodeSubclass>
+        void traverse(Traverser<NodeSubclass>& t){
+            NodeSubclass* cast = dynamic_cast<NodeSubclass *>(this);
+            if(cast != NULL) t.pre(cast);
             for(int i=0, size=children.size(); i<size; i++){
                 children.at(i)->traverse(t);
+                if(cast != NULL) t.inorder(cast, i);
             }
-            t.post(this);
+            if(cast != NULL) t.post(cast);
         }
         /**
          * Call to recursivly delete each tree node
          */
         void deleteTree() {
-            class Deleter : public Traverser {
+            class Deleter : public Traverser<Node> {
                 void post(Node * n){ deleteNode(n); }
             } deleter;
             this->traverse(deleter);

@@ -63,7 +63,7 @@ namespace{
         }
     }
 
-    class StatementListTranslator : public Node::Traverser {
+    class StatementListTranslator : public Node::Traverser<Element> {
     public:
         GeneratedCode& code;
         SymbolTable& table;
@@ -73,8 +73,9 @@ namespace{
         MemoryRef allocate(Type var);
         void computeOperation(int op, int reg, Element* e);
         void loadConst(Element* e);
-        void pre(Node * n);
-        void post(Node * n);
+        void pre(Element * e);
+        void inorder(Element * e, int index);
+        void post(Element * e);
         bool assignTypeOp(int op);
     };
 }
@@ -271,12 +272,13 @@ void StatementListTranslator::loadConst(Element* e){
     code << Inst::loadConst(ACC1, value, e->token->text);
     code << Inst::store(ACC1, e->location, "Store constant");
 }
-void StatementListTranslator::pre(Node * n){
+void StatementListTranslator::pre(Element * e){
 
 }
-void StatementListTranslator::post(Node * n){
-    Element* e = dynamic_cast<Element *>(n);
-    if(e == NULL) return; // not an element node
+void StatementListTranslator::inorder(Element * e, int index){
+
+}
+void StatementListTranslator::post(Element * e){
     switch(e->nodeType){
         /**
          *
