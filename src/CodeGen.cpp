@@ -66,6 +66,7 @@ namespace{
 
     class StatementListTranslator : public Node::Traverser<Element> {
     public:
+        vector<Element*> breakStack;
         GeneratedCode& code;
         SymbolTable& table;
         int freeStackSpace;
@@ -173,6 +174,8 @@ bool StatementListTranslator::assignTypeOp(int op){
         case ADDASS:
         case SUBASS:
         case DIVASS:
+        case INC:
+        case DEC:
             return true;
         default:
             return false;
@@ -183,7 +186,7 @@ bool StatementListTranslator::assignTypeOp(int op){
  */
 void StatementListTranslator::computeOperation(int op, int result, Element* e){
     code << Inst::load(ACC1, &(e->getChild(0)->location), "Load operand");
-    if(e->getChild(1) != NULL){
+    if(dynamic_cast<LeafNode*>(e->getChild(1)) == NULL){
         code << Inst::load(ACC2, &(e->getChild(1)->location), "Load operand");
 
         // Binary operators
@@ -233,7 +236,7 @@ void StatementListTranslator::computeOperation(int op, int result, Element* e){
                   << Inst::alu(Inst::Sub, result, ACC1, ACC3, "Mod finish");
             } break;
             default:
-                cerr << "Unhandled binary op " << e->token->text;
+                cerr << "Unhandled binary op " << e->token->text << endl;
         }
     } else {
         // Unary operators
@@ -251,7 +254,7 @@ void StatementListTranslator::computeOperation(int op, int result, Element* e){
                 code << Inst::alu(Inst::Random, result, ACC1, ZEROREG);
             } break;
             default:
-                cerr << "Unhandled unary op " << e->token->text;
+                cerr << "Unhandled unary op " << e->token->text << endl;
         }
     }
 }
@@ -275,8 +278,13 @@ void StatementListTranslator::loadConst(Element* e){
 }
 void StatementListTranslator::pre(Element * e){
     // bind the code start address for the node
-    if(e->nodeType != FUNCTIONDECL)
+    if(e->nodeType != FUNCTIONDECL) {
         e->codeStart.bind(MemoryRef::Program(code.nextInstructionIndex()));
+    }
+
+    if(e->token->token == WHILE) {
+        breakStack.push_back(e);
+    }
 }
 void StatementListTranslator::inorder(Element * e, int index){
     if(e->token->token == IF){
@@ -293,6 +301,17 @@ void StatementListTranslator::inorder(Element * e, int index){
                 code << Inst::jmp(&(e->codeEnd), "Jump to end of IF");
             } break;
             case 2: { // after else
+            } break;
+        }
+    }
+    if(e->token->token == WHILE){
+        switch(index){
+            case 0: { // after test
+                code << Inst::load(ACC1, &(e->getChild(0)->location), "Load condition")
+                  << Inst::jmpZero(ACC1, &(e->codeEnd), "Jump over block");
+            } break;
+            case 1: { // after block
+                code << Inst::jmp(&(e->codeStart), "Jump to end of WHILE");
             } break;
         }
     }
@@ -318,7 +337,14 @@ void StatementListTranslator::post(Element * e){
         /**
          *
          */
-        case DECLARATION:
+        case DECLARATION: {
+            // if the init argument exists
+            if(dynamic_cast<Element*>(e->getChild(0)) != NULL){
+                code << Inst::load(ACC1, &(e->getChild(0)->location), "load initial value")
+                  << Inst::store(ACC1, &(e->location), "store initial value");
+            }
+            // init array size
+        } /* FALL THROUGH */
         case PARAMETER: {
             table.add(e->token->text, e);
             e->location.bind(allocate(e->type));
@@ -367,6 +393,20 @@ void StatementListTranslator::post(Element * e){
               << Inst::addConst(RETURNVAL, PC, 1, "store return addr")
               << Inst::jmp(funcAddr, "Jump")
               << Inst::store(RETURNVAL, returnTemp, "Store return value");
+        } break;
+        /**
+         *
+         */
+        case AST::BREAK: {
+            code << Inst::jmp(&(breakStack.back()->codeEnd), "break");
+        } break;
+        /**
+         *
+         */
+        case CONTROL: {
+            if(e->token->token == WHILE){
+                breakStack.pop_back();
+            }
         } break;
         /**
          *
