@@ -43,6 +43,7 @@ namespace{
                 delete code[i];
             }
         }
+        int nextInstructionIndex() { return instructionIndex; }
         void initGlobal(Element* glob);
         void mkFunction(SymbolTable& table, Element* func);
         void mkReturn(int valueRegister);
@@ -273,18 +274,25 @@ void StatementListTranslator::loadConst(Element* e){
     code << Inst::store(ACC1, e->location, "Store constant");
 }
 void StatementListTranslator::pre(Element * e){
-
+    // bind the code start address for the node
+    if(e->nodeType != FUNCTIONDECL)
+        e->codeStart.bind(MemoryRef::Program(code.nextInstructionIndex()));
 }
 void StatementListTranslator::inorder(Element * e, int index){
     if(e->token->token == IF){
         switch(index){
             case 0: { // after test
-                // if tests value is false, jump over case 1
+                Location* passoverLocation =
+                    (dynamic_cast<LeafNode*>(e->getChild(2)) != NULL)
+                        ? &(e->codeEnd)// no ELSE
+                        : &(e->getChild(2)->codeStart); // ELSE exists
+                code << Inst::load(ACC1, &(e->getChild(0)->location), "Load condition")
+                  << Inst::jmpZero(ACC1, passoverLocation, "Jump over block");
             } break;
             case 1: { // after true statement
-                // jump to the end of case 2 if it exists
+                code << Inst::jmp(&(e->codeEnd), "Jump to end of IF");
             } break;
-            case 2: { // after
+            case 2: { // after else
             } break;
         }
     }
@@ -374,4 +382,7 @@ void StatementListTranslator::post(Element * e){
         } break;
         default: break;
     }
+
+    // bind the code end address for the node
+    e->codeEnd.bind(MemoryRef::Program(code.nextInstructionIndex()));
 }

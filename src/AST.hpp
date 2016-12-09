@@ -66,6 +66,8 @@ namespace AST{
         Location location;
         /** Location of the first instruction to computer/enter this node */
         Location codeStart;
+        /** Location of the first instruction after this node is computed */
+        Location codeEnd;
 
         const Token * token;
         virtual ~Node(){};
