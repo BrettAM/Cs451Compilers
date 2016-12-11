@@ -73,9 +73,11 @@ namespace{
     class StatementListTranslator : public Node::Traverser<Element> {
     public:
         vector<Element*> breakStack;
+        set<Node*> tempResetStatements;
         GeneratedCode& code;
         SymbolTable& table;
         int freeStackSpace;
+        int tempResetLocation;
         bool allocateDecls;
         StatementListTranslator(GeneratedCode& code, SymbolTable& table, bool allocateDecls=true):
             code(code), table(table), freeStackSpace(-2), allocateDecls(allocateDecls) {}
@@ -395,6 +397,16 @@ void StatementListTranslator::inorder(Element * e, int index){
             } break;
         }
     }
+    if(e->nodeType == COMPOUND && index == 0){
+        // mark this space as having permanent variables
+        tempResetLocation = freeStackSpace;
+        // mark the statements with the knowledge that no temporaries
+        //   will need to be conserved between them
+        Node* statementList = e->getChild(1);
+        for(int i=0; statementList->getChild(i)!=NULL; i++){
+            tempResetStatements.insert(statementList->getChild(i));
+        }
+    }
 }
 void StatementListTranslator::post(Element * e){
     switch(e->nodeType){
@@ -530,4 +542,10 @@ void StatementListTranslator::post(Element * e){
 
     // bind the code end address for the node
     e->codeEnd.bind(MemoryRef::Program(code.nextInstructionIndex()));
+
+    // if its known that temporaries will not leave this statement, reset
+    //   the free stack space pointer to the end of the variable declarations
+    if(tempResetStatements.find(e) != tempResetStatements.end()){
+        freeStackSpace = tempResetLocation;
+    }
 }
