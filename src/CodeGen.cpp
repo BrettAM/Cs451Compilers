@@ -188,9 +188,7 @@ void StatementListTranslator::resolveArrayLocation(int reg, Node* array, vector<
         }
 }
 void StatementListTranslator::resolveArrayIndex(int reg, Node* e, vector<Instruction*>& result){
-    vector<Instruction*> indexLoadSeq = loadVal(ACC3, e->getChild(1), "load index");
-    result.insert(result.begin(), indexLoadSeq.begin(), indexLoadSeq.end());
-
+    result.push_back(Inst::load(ACC3, &(e->location)));
     resolveArrayLocation(ACC2, e->getChild(0), result);
 
     result.push_back(Inst::alu(Inst::Sub, ACC3, ACC2, ACC3, "calculate element address"));
@@ -299,6 +297,9 @@ void StatementListTranslator::computeOperation(int op, int result, Element* e){
                   << Inst::alu(Inst::Mul, ACC3, ACC2, ACC3, "Mod continued")
                   << Inst::alu(Inst::Sub, result, ACC1, ACC3, "Mod finish");
             } break;
+            case '[': {
+                code << Inst::move(result, ACC2, "array indexing");
+            } break;
             default:
                 cerr << "Unhandled binary op " << e->token->text << endl;
         }
@@ -398,17 +399,18 @@ void StatementListTranslator::inorder(Element * e, int index){
 void StatementListTranslator::post(Element * e){
     switch(e->nodeType){
         /**
-         *
+         * Keep track of leaving scopes
          */
         case COMPOUND: {
             table.exit();
         } break;
         /**
-         *
+         * compute a value and store it in a temporary; if its an assignment
+         *   operation, subsequently move that temporary to the left child's
+         *   location in memory
          */
         case OPERATION: {
             int op = e->token->token;
-            if(op == '[') return;
 
             e->location.bind(allocate(e->type));
             computeOperation(op, ACC1, e);
@@ -419,7 +421,8 @@ void StatementListTranslator::post(Element * e){
             }
         } break;
         /**
-         *
+         * Allocate space if we are not processing globals, set initial value
+         *   and array size
          */
         case DECLARATION: {
             table.add(e->token->text, e);
@@ -440,6 +443,10 @@ void StatementListTranslator::post(Element * e){
                   << Inst::store(ACC1, sizeAddress, "store array length");
             }
         } break;
+        /**
+         * Allocate a function parameter; they are always a single word
+         *   so that is specified in the call to allocate
+         */
         case PARAMETER: {
             table.add(e->token->text, e);
             if(this->allocateDecls){
@@ -447,7 +454,7 @@ void StatementListTranslator::post(Element * e){
             }
         } break;
         /**
-         *
+         * Bind an ID's location or load a constant into a temporary
          */
         case VALUE: {
             if(e->token->token == ID) {
@@ -465,7 +472,7 @@ void StatementListTranslator::post(Element * e){
             emitASM(code, e->token->text);
         } break;
         /**
-         *
+         * Build a ghost frame, load parameters, call, store return
          */
         case CALL: {
             Location* funcAddr = &(table.lookup(e->token->text)->codeStart);
@@ -492,13 +499,14 @@ void StatementListTranslator::post(Element * e){
               << Inst::store(RETURNVAL, returnTemp, "Store return value");
         } break;
         /**
-         *
+         * Jump out of the most recent while loop
          */
         case AST::BREAK: {
             code << Inst::jmp(&(breakStack.back()->codeEnd), "break");
         } break;
         /**
-         *
+         * Keep track of leaving WHILE loops so we know where to break to
+         *   actual while loop control logic is placed in the inorder traversal
          */
         case CONTROL: {
             if(e->token->token == WHILE){
@@ -506,7 +514,7 @@ void StatementListTranslator::post(Element * e){
             }
         } break;
         /**
-         *
+         * Load the return value and jump
          */
         case RETURNSTMT:{
             Node * rtval = e->getChild(0);
