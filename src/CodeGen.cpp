@@ -27,6 +27,12 @@ namespace{
             emit(istr);
             return *this;
         }
+        GeneratedCode& operator<<(vector<Instruction*> istrs){
+            for(size_t i=0; i<istrs.size(); i++){
+                emit(istrs[i]);
+            }
+            return *this;
+        }
         void dump(ostream& output){
             for(size_t i=0; i<code.size(); i++){
                 try{
@@ -73,7 +79,11 @@ namespace{
         bool allocateDecls;
         StatementListTranslator(GeneratedCode& code, SymbolTable& table, bool allocateDecls=true):
             code(code), table(table), freeStackSpace(-2), allocateDecls(allocateDecls) {}
-        MemoryRef allocate(Type var);
+        MemoryRef allocate(Type var, bool parameter = false);
+        vector<Instruction*> loadVal(int reg, Node* e, string cmt = "");
+        vector<Instruction*> storeVal(int reg, Node* e, string cmt = "");
+        void resolveArrayLocation(int reg, Node* array, vector<Instruction*>& result);
+        void resolveArrayIndex(int reg, Node* e, vector<Instruction*>& result);
         void computeOperation(int op, int reg, Element* e);
         void loadConst(Element* e);
         void pre(Element * e);
@@ -103,7 +113,7 @@ void CodeGen::generate(Node* tree, ostream& output){
                 table.add(e->token->text, e);
                 // set the location of the global and keep track of its size
                 e->location.bind(
-                    Mem::Data(e->type.offset()-globalSize, GLOBALFRM)
+                    Mem::Data(-(e->type.offset()+globalSize), GLOBALFRM)
                     );
                 globalSize += e->type.size();
                 break;
@@ -165,10 +175,60 @@ void GeneratedCode::mkReturn(int valueRegister){
       << Inst::load(LOCALFRM, OLD_FRAME_LOC, "pop frame")
       << Inst::move(PC, ACC1, "jump");
 }
+void StatementListTranslator::resolveArrayLocation(int reg, Node* array, vector<Instruction*>& result){
+        Node* def = table.lookup(array->token->text);
+        bool param = (def != NULL) && (((Element*)def)->nodeType == PARAMETER);
 
-MemoryRef StatementListTranslator::allocate(Type var){
-    MemoryRef space = Mem::Data(freeStackSpace-var.offset(), LOCALFRM);
-    freeStackSpace -= var.size();
+        if(param){
+            // its value is already an address
+            result.push_back(Inst::load(reg, &(array->location)));
+        } else {
+            MemoryRef m = array->location.lookup(); // this early lookup sucks
+            result.push_back(Inst::addConst(reg, m.registr, m.offset));
+        }
+}
+void StatementListTranslator::resolveArrayIndex(int reg, Node* e, vector<Instruction*>& result){
+    vector<Instruction*> indexLoadSeq = loadVal(ACC3, e->getChild(1), "load index");
+    result.insert(result.begin(), indexLoadSeq.begin(), indexLoadSeq.end());
+
+    resolveArrayLocation(ACC2, e->getChild(0), result);
+
+    result.push_back(Inst::alu(Inst::Sub, ACC3, ACC2, ACC3, "calculate element address"));
+}
+vector<Instruction*>
+StatementListTranslator::loadVal(int reg, Node* e, string cmt){
+    vector<Instruction*> result;
+
+    if(e->type.isArray()){ // load array address
+        resolveArrayLocation(reg, e, result);
+    } else if (e->token->token == '[') { // load array value
+        resolveArrayIndex(ACC3, e, result);
+        result.push_back(Inst::load(reg, Mem::Data(0, ACC3), cmt));
+    } else { // load normal value
+        result.push_back(Inst::load(reg, &(e->location), cmt));
+    }
+
+    return result;
+}
+vector<Instruction*>
+StatementListTranslator::storeVal(int reg, Node* e, string cmt){
+    vector<Instruction*> result;
+
+    if (e->token->token == '[') { // store array value
+        resolveArrayIndex(ACC3, e, result);
+        result.push_back(Inst::store(reg, Mem::Data(0, ACC3), cmt));
+    } else { // store normal value
+        result.push_back(Inst::store(reg, &(e->location), cmt));
+    }
+
+    return result;
+}
+
+MemoryRef StatementListTranslator::allocate(Type var, bool parameter){
+    int size   = (parameter)? 1 : var.size();
+    int offset = (parameter)? 0 : var.offset();
+    MemoryRef space = Mem::Data(freeStackSpace-offset, LOCALFRM);
+    freeStackSpace -= size;
     return space;
 }
 bool StatementListTranslator::assignTypeOp(int op){
@@ -189,15 +249,12 @@ bool StatementListTranslator::assignTypeOp(int op){
  * leave the value resulting from `op` in `reg`
  */
 void StatementListTranslator::computeOperation(int op, int result, Element* e){
-    code << Inst::load(ACC1, &(e->getChild(0)->location), "Load operand");
+    code << loadVal(ACC1, e->getChild(0), "Load operand");
     if(dynamic_cast<LeafNode*>(e->getChild(1)) == NULL){
-        code << Inst::load(ACC2, &(e->getChild(1)->location), "Load operand");
+        code << loadVal(ACC2, e->getChild(1), "Load second operand");
 
         // Binary operators
         switch(op){
-            case NOTEQ: case NOT: {
-                code << Inst::alu(Inst::Not, result, ACC1, ACC2);
-            } break;
             case MULASS: case '*': {
                 code << Inst::alu(Inst::Mul, result, ACC1, ACC2);
             } break;
@@ -218,6 +275,9 @@ void StatementListTranslator::computeOperation(int op, int result, Element* e){
             } break;
             case EQ: {
                 code << Inst::alu(Inst::Equal, result, ACC1, ACC2);
+            } break;
+            case NOTEQ: {
+                code << Inst::alu(Inst::NotEqual, result, ACC1, ACC2);
             } break;
             case GRTEQ: {
                 code << Inst::alu(Inst::GreaterEqual, result, ACC1, ACC2);
@@ -261,6 +321,13 @@ void StatementListTranslator::computeOperation(int op, int result, Element* e){
             case '?': {
                 code << Inst::alu(Inst::Random, result, ACC1, ZEROREG);
             } break;
+            case '*': {
+                vector<Instruction *> addressResolution;
+                resolveArrayLocation(ACC1, e->getChild(0), addressResolution);
+                code << addressResolution
+                  << Inst::addConst(ACC1, ACC1, 1, "location of array size")
+                  << Inst::load(ACC1, Mem::Data(0, ACC1), "load array size");
+            } break;
             default:
                 cerr << "Unhandled unary op " << e->token->text << endl;
         }
@@ -293,6 +360,10 @@ void StatementListTranslator::pre(Element * e){
     if(e->token->token == WHILE) {
         breakStack.push_back(e);
     }
+
+    if(e->nodeType == COMPOUND){
+        table.enter(e);
+    }
 }
 void StatementListTranslator::inorder(Element * e, int index){
     if(e->token->token == IF){
@@ -302,7 +373,7 @@ void StatementListTranslator::inorder(Element * e, int index){
                     (dynamic_cast<LeafNode*>(e->getChild(2)) != NULL)
                         ? &(e->codeEnd)// no ELSE
                         : &(e->getChild(2)->codeStart); // ELSE exists
-                code << Inst::load(ACC1, &(e->getChild(0)->location), "Load condition")
+                code << loadVal(ACC1, e->getChild(0), "Load Condition")
                   << Inst::jmpZero(ACC1, passoverLocation, "Jump over block");
             } break;
             case 1: { // after true statement
@@ -315,7 +386,7 @@ void StatementListTranslator::inorder(Element * e, int index){
     if(e->token->token == WHILE){
         switch(index){
             case 0: { // after test
-                code << Inst::load(ACC1, &(e->getChild(0)->location), "Load condition")
+                code << loadVal(ACC1, e->getChild(0), "Load Condition")
                   << Inst::jmpZero(ACC1, &(e->codeEnd), "Jump over block");
             } break;
             case 1: { // after block
@@ -329,36 +400,51 @@ void StatementListTranslator::post(Element * e){
         /**
          *
          */
-        // handle array references '['
+        case COMPOUND: {
+            table.exit();
+        } break;
+        /**
+         *
+         */
         case OPERATION: {
             int op = e->token->token;
-            if(assignTypeOp(op)){
-                e->location.bind( &(e->getChild(0)->location) );
-            } else {
-                e->location.bind( allocate(e->type) );
-            }
+            if(op == '[') return;
 
+            e->location.bind(allocate(e->type));
             computeOperation(op, ACC1, e);
-
             code << Inst::store(ACC1, e->location, "Store computed value");
+
+            if(assignTypeOp(op)){
+                code << storeVal(ACC1, e->getChild(0), "Assign computed value");
+            }
         } break;
         /**
          *
          */
         case DECLARATION: {
-            // if the init argument exists
-            if(dynamic_cast<Element*>(e->getChild(0)) != NULL){
-                code << Inst::load(ACC1, &(e->getChild(0)->location), "load initial value")
-                  << Inst::store(ACC1, &(e->location), "store initial value");
-            }
-            // init array size
-        } /* FALL THROUGH */
-        case PARAMETER: {
             table.add(e->token->text, e);
             if(this->allocateDecls){
                 e->location.bind(allocate(e->type));
             }
-            // if declaration, copy initialization value in
+            // if the init argument exists
+            if(dynamic_cast<Element*>(e->getChild(0)) != NULL){
+                code << loadVal(ACC1, e->getChild(0), "load Initial Value")
+                  << storeVal(ACC1, e, "store initial value");
+            }
+            // if its an array, store its size
+            if(e->type.isArray()){
+                MemoryRef arrayAddress = e->location.lookup();
+                MemoryRef sizeAddress =
+                    Mem::Data(arrayAddress.offset+1, arrayAddress.registr);
+                code << Inst::loadConst(ACC1, e->type.arrayLength(), "load array size")
+                  << Inst::store(ACC1, sizeAddress, "store array length");
+            }
+        } break;
+        case PARAMETER: {
+            table.add(e->token->text, e);
+            if(this->allocateDecls){
+                e->location.bind(allocate(e->type, true/*parameter*/));
+            }
         } break;
         /**
          *
@@ -385,21 +471,22 @@ void StatementListTranslator::post(Element * e){
             Location* funcAddr = &(table.lookup(e->token->text)->codeStart);
             MemoryRef returnTemp = allocate(e->type);
             e->location.bind(returnTemp);
-            // setup a phost frame in ACC3
+            // setup a phost frame in GHFRM
+            int GHFRM = RETURNVAL;
             code << Inst::comment("Jump to ", e->token->text)
-              << Inst::addConst(ACC3, LOCALFRM, freeStackSpace, "Make ghost frame");
+              << Inst::addConst(GHFRM, LOCALFRM, freeStackSpace, "Make ghost frame");
             // load parameters (present if e->getChild(0) is a sibling list)
             Node* parameterList = e->getChild(0);
             if(dynamic_cast<SiblingList*>(parameterList) != NULL){
                 for(int i=0; parameterList->getChild(i) != NULL; i++){
                     Node * param = parameterList->getChild(i);
-                    code << Inst::load(ACC1, &(param->location), "load param")
-                      << Inst::store(ACC1, Mem::Data(-(i+2), ACC3), "set param");
+                    code << loadVal(ACC1, param, "load param")
+                      << Inst::store(ACC1, Mem::Data(-(i+2), GHFRM), "set param");
                 }
             }
             // Execute call and store return value
-            code << Inst::store(LOCALFRM, Mem::Data(0, ACC3), "Store local frame")
-              << Inst::move(LOCALFRM, ACC3, "Swap to ghost frame")
+            code << Inst::store(LOCALFRM, Mem::Data(0, GHFRM), "Store local frame")
+              << Inst::move(LOCALFRM, GHFRM, "Swap to ghost frame")
               << Inst::addConst(RETURNVAL, PC, 1, "store return addr")
               << Inst::jmp(funcAddr, "Jump")
               << Inst::store(RETURNVAL, returnTemp, "Store return value");
@@ -425,7 +512,7 @@ void StatementListTranslator::post(Element * e){
             Node * rtval = e->getChild(0);
             int returnReg = ZEROREG;
             if(dynamic_cast<Element*>(rtval) != NULL){
-                code << Inst::load(ACC1, rtval->location, "Load return value");
+                code << loadVal(ACC1, rtval, "Load return value");
                 returnReg = ACC1;
             }
             code.mkReturn(returnReg);
